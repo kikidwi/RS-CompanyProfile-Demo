@@ -1,3 +1,6 @@
+# Project docs (local only)
+guidelines/
+
 # Dependencies
 node_modules/
 .pnp
