@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 import {
   ClipboardList,
   MonitorSmartphone,
@@ -15,14 +17,14 @@ type RegistrationType = "rawat-jalan" | "rawat-inap" | "igd" | "online";
 type RegistrationFlow = {
   id: RegistrationType;
   label: string;
-  icon: React.ElementType;
-  color: string;
+  icon?: React.ElementType; // Optional because firestore doesn't have it
+  color?: string; // Optional
   description: string;
   steps: { title: string; detail: string }[];
   requirements: string[];
 };
 
-const flows: RegistrationFlow[] = [
+export const defaultFlows: RegistrationFlow[] = [
   {
     id: "rawat-jalan",
     label: "Rawat Jalan",
@@ -232,7 +234,49 @@ function RequirementAccordion({ requirements }: { requirements: string[] }) {
 
 export default function AlurPendaftaran() {
   const [active, setActive] = useState<RegistrationType>("rawat-jalan");
-  const flow = flows.find((f) => f.id === active)!;
+  const [flowsData, setFlowsData] = useState<RegistrationFlow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "informasi_alur"));
+        if (!snap.empty) {
+          const items: RegistrationFlow[] = [];
+          snap.forEach(doc => {
+            const data = doc.data() as RegistrationFlow;
+            // Merge with default to get icon and color
+            const def = defaultFlows.find(f => f.id === data.id);
+            items.push({
+              ...data,
+              icon: def?.icon || ClipboardList,
+              color: def?.color || "#006370",
+            });
+          });
+          
+          // Sort to match defaultFlows order
+          const orderMap = new Map(defaultFlows.map((f, i) => [f.id, i]));
+          items.sort((a, b) => (orderMap.get(a.id) || 0) - (orderMap.get(b.id) || 0));
+          
+          setFlowsData(items);
+        } else {
+          setFlowsData(defaultFlows);
+        }
+      } catch (err) {
+        console.error("Gagal memuat alur:", err);
+        setFlowsData(defaultFlows);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-20 text-gray-500">Memuat data...</div>;
+  }
+
+  const flow = flowsData.find((f) => f.id === active) || flowsData[0];
 
   return (
     <div className="w-full" style={{ fontFamily: "'Karla', sans-serif" }}>
@@ -244,7 +288,7 @@ export default function AlurPendaftaran() {
 
       {/* Type Selector */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
-        {flows.map((f) => (
+        {flowsData.map((f) => (
           <button
             key={f.id}
             onClick={() => setActive(f.id)}

@@ -1,6 +1,9 @@
+import { useState, useEffect } from "react";
 import { ShieldCheck, Clock, Star, ThumbsUp, AlertCircle } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 
-const maklumatItems = [
+export const defaultMaklumatItems = [
   {
     no: "01",
     title: "Standar Keselamatan Pasien",
@@ -64,6 +67,37 @@ const maklumatItems = [
 ];
 
 export default function MaklumatPelayanan() {
+  const [maklumat, setMaklumat] = useState(defaultMaklumatItems);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "layanan_maklumat"));
+        if (!snap.empty) {
+          const items: any[] = [];
+          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
+          items.sort((a, b) => (a.order || 0) - (b.order || 0));
+          
+          const iconMap: any = {
+            ShieldCheck, Clock, Star, ThumbsUp, AlertCircle
+          };
+
+          const mappedItems = items.map(item => ({
+            ...item,
+            icon: typeof item.icon === 'string' ? (iconMap[item.icon] || AlertCircle) : item.icon
+          }));
+
+          setMaklumat(mappedItems);
+        }
+      } catch (err) {
+        console.error("Gagal memuat Maklumat dari Firebase:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   return (
     <div className="w-full" style={{ fontFamily: "'Karla', sans-serif" }}>
       {/* Header */}
@@ -83,7 +117,9 @@ export default function MaklumatPelayanan() {
 
       {/* Maklumat Items */}
       <div className="space-y-8">
-        {maklumatItems.map((item, i) => (
+        {loading ? (
+          <div className="py-12 text-center text-gray-500">Memuat maklumat pelayanan...</div>
+        ) : maklumat.map((item, i) => (
           <div
             key={i}
             className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"

@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 import { Calendar, Clock, ArrowRight, Search, X, BookOpen } from "lucide-react";
-import { articles, categoryConfig, type ArticleCategory } from "./articlesData";
+import { articles as defaultArticles, categoryConfig, type ArticleCategory, type Article } from "./articlesData";
 
 const categories = ["Semua", "Berita", "Edukasi", "Pengumuman"] as const;
 type FilterCategory = (typeof categories)[number];
 
-function ArticleCard({ article }: { article: (typeof articles)[number] }) {
+function ArticleCard({ article }: { article: Article }) {
   const cfg = categoryConfig[article.category];
   return (
     <Link
@@ -79,8 +81,32 @@ function ArticleCard({ article }: { article: (typeof articles)[number] }) {
 export default function BeritaArtikel() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<FilterCategory>("Semua");
+  const [articlesData, setArticlesData] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = articles.filter((a) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "informasi_berita"));
+        if (!snap.empty) {
+          const items: Article[] = [];
+          snap.forEach(doc => items.push({ ...doc.data() } as Article));
+          items.sort((a, b) => b.id - a.id);
+          setArticlesData(items);
+        } else {
+          setArticlesData(defaultArticles);
+        }
+      } catch (err) {
+        console.error("Gagal memuat berita:", err);
+        setArticlesData(defaultArticles);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredArticles = articlesData.filter((a) => {
     const matchSearch =
       a.title.toLowerCase().includes(search.toLowerCase()) ||
       a.excerpt.toLowerCase().includes(search.toLowerCase()) ||
@@ -148,7 +174,7 @@ export default function BeritaArtikel() {
       {/* Result count */}
       <p className="text-gray-400 text-sm mb-6">
         Menampilkan{" "}
-        <span className="font-bold text-gray-700">{filtered.length}</span> artikel
+        <span className="font-bold text-gray-700">{filteredArticles.length}</span> artikel
         {activeCategory !== "Semua" && (
           <>
             {" "}dalam kategori{" "}
@@ -163,9 +189,11 @@ export default function BeritaArtikel() {
       </p>
 
       {/* Grid */}
-      {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((article) => (
+      {loading ? (
+        <div className="text-center py-20 text-gray-500 font-medium">Memuat berita...</div>
+      ) : filteredArticles.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredArticles.map((article) => (
             <ArticleCard key={article.id} article={article} />
           ))}
         </div>

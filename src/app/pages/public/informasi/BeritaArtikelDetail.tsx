@@ -1,25 +1,77 @@
-import { useState } from "react";
-import { Link, useParams, Navigate } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useParams, Navigate, useNavigate } from "react-router";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 import { Calendar, Clock, Tag, ChevronRight, ArrowLeft, Share2, User, Check } from "lucide-react";
-import { articles, categoryConfig } from "./articlesData";
+import { articles as defaultArticles, categoryConfig, type Article } from "./articlesData";
 
 export default function BeritaArtikelDetail() {
   const { slug } = useParams<{ slug: string }>();
   const [copyDone, setCopyDone] = useState(false);
 
-  const article = articles.find((a) => a.slug === slug);
+  const navigate = useNavigate();
+  const [article, setArticle] = useState<Article | null>(null);
+  const [related, setRelated] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Redirect back to list if slug not found
-  if (!article) {
-    return <Navigate to="/informasi/berita-artikel" replace />;
+  useEffect(() => {
+    const fetchArticle = async () => {
+      setLoading(true);
+      window.scrollTo(0, 0);
+
+      try {
+        const q = query(collection(db, "informasi_berita"), where("slug", "==", slug), limit(1));
+        const snap = await getDocs(q);
+        
+        let currentArticle: Article | undefined;
+
+        if (!snap.empty) {
+          currentArticle = snap.docs[0].data() as Article;
+        } else {
+          currentArticle = defaultArticles.find((a) => a.slug === slug);
+        }
+
+        if (currentArticle) {
+          setArticle(currentArticle);
+          
+          // Fetch related
+          const allSnap = await getDocs(collection(db, "informasi_berita"));
+          const allArticles: Article[] = [];
+          if (!allSnap.empty) {
+            allSnap.forEach(d => allArticles.push(d.data() as Article));
+          } else {
+            allArticles.push(...defaultArticles);
+          }
+          
+          setRelated(
+            allArticles
+              .filter((a) => a.slug !== slug && a.category === currentArticle?.category)
+              .slice(0, 3)
+          );
+        }
+      } catch (err) {
+        console.error("Gagal memuat detail berita:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchArticle();
+  }, [slug]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center font-medium text-gray-500">Memuat artikel...</div>;
   }
 
-  const cfg = categoryConfig[article.category];
+  if (!article) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center font-medium text-gray-500 p-6">
+        <p className="mb-4">Artikel tidak ditemukan atau telah dihapus.</p>
+        <Link to="/informasi/berita-artikel" className="text-[#3b9ca5] font-bold hover:underline">Kembali ke Berita</Link>
+      </div>
+    );
+  }
 
-  // Related articles: same category, different slug, max 3
-  const related = articles
-    .filter((a) => a.slug !== slug && a.category === article.category)
-    .slice(0, 3);
+  const cfg = categoryConfig[article.category] || categoryConfig["Berita"];
 
   // ── Share handler ──────────────────────────────────
   const handleShare = async () => {

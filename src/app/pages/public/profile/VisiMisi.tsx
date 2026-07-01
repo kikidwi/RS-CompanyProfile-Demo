@@ -1,4 +1,51 @@
+import { useState, useEffect } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
+
+const defaultData = {
+  visi: "Menjadi Rumah Sakit Rujukan Nasional Terdepan yang Mengedepankan Pelayanan Medis Paripurna, Inovatif, dan Berkeadilan bagi Seluruh Lapisan Masyarakat di Tahun 2030.",
+  misi: [
+    "Memberikan pelayanan kesehatan yang aman, bermutu tinggi, dan berfokus pada keselamatan serta kepuasan pasien.",
+    "Mengembangkan profesionalisme sumber daya manusia melalui program pendidikan, pelatihan, dan penelitian kesehatan yang berkelanjutan.",
+    "Menyediakan fasilitas dan peralatan medis mutakhir yang ramah lingkungan dan memenuhi standar keamanan internasional.",
+    "Melaksanakan tata kelola rumah sakit yang baik (Good Corporate Governance) secara transparan, akuntabel, dan bertanggung jawab.",
+    "Membangun jejaring kemitraan strategis dengan institusi kesehatan, pendidikan, dan pemerintah untuk memperluas jangkauan layanan.",
+  ],
+  nilaiBudaya: [
+    { label: "Berorientasi Pelayanan", desc: "Memahami kebutuhan masyarakat dan memberikan layanan yang ramah serta dapat diandalkan." },
+    { label: "Akuntabel", desc: "Menyelesaikan tugas dengan jujur, bertanggung jawab, dan penuh integritas." },
+    { label: "Kompeten", desc: "Terus meningkatkan kemampuan untuk menghadapi setiap tantangan." },
+    { label: "Harmonis", desc: "Menghargai setiap orang tanpa memandang latar belakang." },
+    { label: "Loyalitas", desc: "Menjaga nama baik institusi, pimpinan, dan negara." },
+    { label: "Adaptif", desc: "Cepat menyesuaikan diri dengan perubahan dan terus berinovasi." },
+    { label: "Kolaboratif", desc: "Bekerja sama dengan berbagai pihak untuk menghasilkan nilai tambah bersama." },
+  ],
+  tagline: "Health for All — Sehat untuk Semua",
+};
+
 export default function VisiMisi() {
+  const [data, setData] = useState(defaultData);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const docSnap = await getDoc(doc(db, "profil", "visi-misi"));
+        if (docSnap.exists()) {
+          const d = docSnap.data();
+          setData({
+            visi: d.visi || defaultData.visi,
+            misi: d.misi || defaultData.misi,
+            nilaiBudaya: d.nilaiBudaya || defaultData.nilaiBudaya,
+            tagline: d.tagline || defaultData.tagline,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching visi misi:", error);
+      }
+    }
+    fetchData();
+  }, []);
+
   return (
     <div
       className="w-full"
@@ -10,7 +57,7 @@ export default function VisiMisi() {
 
       <div className="bg-[#006370] text-white rounded-xl px-8 py-6 mb-12">
         <p className="text-lg md:text-xl font-semibold leading-relaxed italic">
-          "Menjadi Rumah Sakit Rujukan Nasional Terdepan yang Mengedepankan Pelayanan Medis Paripurna, Inovatif, dan Berkeadilan bagi Seluruh Lapisan Masyarakat di Tahun 2030."
+          "{data.visi}"
         </p>
       </div>
 
@@ -23,13 +70,7 @@ export default function VisiMisi() {
       </p>
 
       <ol className="space-y-4 mb-12">
-        {[
-          "Memberikan pelayanan kesehatan yang aman, bermutu tinggi, dan berfokus pada keselamatan serta kepuasan pasien.",
-          "Mengembangkan profesionalisme sumber daya manusia melalui program pendidikan, pelatihan, dan penelitian kesehatan yang berkelanjutan.",
-          "Menyediakan fasilitas dan peralatan medis mutakhir yang ramah lingkungan dan memenuhi standar keamanan internasional.",
-          "Melaksanakan tata kelola rumah sakit yang baik (Good Corporate Governance) secara transparan, akuntabel, dan bertanggung jawab.",
-          "Membangun jejaring kemitraan strategis dengan institusi kesehatan, pendidikan, dan pemerintah untuk memperluas jangkauan layanan.",
-        ].map((item, i) => (
+        {data.misi.map((item, i) => (
           <li key={i} className="flex gap-4 text-gray-700 text-[15px] leading-relaxed">
             <span className="shrink-0 w-7 h-7 rounded-full bg-[#3b9ca5] text-white text-sm font-bold flex items-center justify-center mt-0.5">
               {i + 1}
@@ -50,15 +91,7 @@ export default function VisiMisi() {
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 mb-6">
-        {[
-          { label: "Berorientasi Pelayanan", desc: "Memahami kebutuhan masyarakat dan memberikan layanan yang ramah serta dapat diandalkan." },
-          { label: "Akuntabel", desc: "Menyelesaikan tugas dengan jujur, bertanggung jawab, dan penuh integritas." },
-          { label: "Kompeten", desc: "Terus meningkatkan kemampuan untuk menghadapi setiap tantangan." },
-          { label: "Harmonis", desc: "Menghargai setiap orang tanpa memandang latar belakang." },
-          { label: "Loyalitas", desc: "Menjaga nama baik institusi, pimpinan, dan negara." },
-          { label: "Adaptif", desc: "Cepat menyesuaikan diri dengan perubahan dan terus berinovasi." },
-          { label: "Kolaboratif", desc: "Bekerja sama dengan berbagai pihak untuk menghasilkan nilai tambah bersama." },
-        ].map((item) => (
+        {data.nilaiBudaya.map((item) => (
           <div key={item.label} className="border-l-2 border-[#3b9ca5] pl-4 py-1">
             <p className="font-semibold text-gray-800 text-sm">{item.label}</p>
             <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
@@ -71,8 +104,9 @@ export default function VisiMisi() {
       {/* Tagline */}
       <p className="text-gray-500 text-sm">
         <span className="font-semibold text-[#006370]">Tagline:</span>{" "}
-        <em>"Health for All — Sehat untuk Semua"</em>
+        <em>"{data.tagline}"</em>
       </p>
     </div>
   );
 }
+

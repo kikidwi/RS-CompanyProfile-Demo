@@ -18,6 +18,7 @@ import KamarPerawatan from './pages/public/layanan/KamarPerawatan';
 import MaklumatPelayanan from './pages/public/layanan/MaklumatPelayanan';
 import KetersediaanKamar from './pages/public/layanan/KetersediaanKamar';
 import Promosi from './pages/public/Promosi';
+import PromosiDetail from './pages/public/PromosiDetail';
 import Dokter from './pages/public/Dokter';
 import InformasiLayout from './pages/public/informasi/InformasiLayout';
 import BeritaArtikel from './pages/public/informasi/BeritaArtikel';
@@ -34,6 +35,26 @@ import Dashboard from './pages/admin/Dashboard';
 import PengaturanLayout from './pages/admin/pengaturan/PengaturanLayout';
 import PengaturanUmum from './pages/admin/pengaturan/PengaturanUmum';
 import ManajemenUser from './pages/admin/pengaturan/ManajemenUser';
+
+import ProfilLayout from './pages/admin/profil/ProfilLayout';
+import AdminTentangKami from './pages/admin/profil/AdminTentangKami';
+import AdminVisiMisi from './pages/admin/profil/AdminVisiMisi';
+import AdminDireksi from './pages/admin/profil/AdminDireksi';
+import AdminDewanPengawas from './pages/admin/profil/AdminDewanPengawas';
+
+import AdminDokter from './pages/admin/AdminDokter';
+import AdminPromosi from './pages/admin/AdminPromosi';
+
+import AdminLayananLayout from './pages/admin/layanan/LayananLayout';
+import AdminMCU from './pages/admin/layanan/AdminMCU';
+import AdminKamar from './pages/admin/layanan/AdminKamar';
+import AdminMaklumat from './pages/admin/layanan/AdminMaklumat';
+import AdminKetersediaan from './pages/admin/layanan/AdminKetersediaan';
+
+import AdminInformasiLayout from './pages/admin/informasi/AdminInformasiLayout';
+import AdminBerita from './pages/admin/informasi/AdminBerita';
+import AdminAlurPendaftaran from './pages/admin/informasi/AdminAlurPendaftaran';
+import AdminInfoPenting from './pages/admin/informasi/AdminInfoPenting';
 
 export default function Router() {
   return (
@@ -64,7 +85,10 @@ export default function Router() {
           <Route path="dokter" element={<Dokter />} />
 
           {/* Promosi */}
-          <Route path="promosi" element={<Promosi />} />
+          <Route path="promosi">
+            <Route index element={<Promosi />} />
+            <Route path=":id" element={<PromosiDetail />} />
+          </Route>
 
           {/* Informasi Routes with Tab Layout */}
           <Route path="informasi" element={<InformasiLayout />}>
@@ -91,9 +115,36 @@ export default function Router() {
             <Route index element={<PengaturanUmum />} />
             <Route path="pengguna" element={<ManajemenUser />} />
           </Route>
+
+          <Route path="profil" element={<ProfilLayout />}>
+            <Route index element={<AdminTentangKami />} />
+            <Route path="visi-misi" element={<AdminVisiMisi />} />
+            <Route path="direksi" element={<AdminDireksi />} />
+            <Route path="dewan-pengawas" element={<AdminDewanPengawas />} />
+          </Route>
+          
+          <Route path="dokter" element={<AdminDokter />} />
+          <Route path="promosi" element={<AdminPromosi />} />
+          
+          <Route path="layanan" element={<AdminLayananLayout />}>
+            <Route index element={<AdminMCU />} />
+            <Route path="kamar" element={<AdminKamar />} />
+            <Route path="maklumat" element={<AdminMaklumat />} />
+            <Route path="ketersediaan" element={<AdminKetersediaan />} />
+          </Route>
+          
+          <Route path="informasi" element={<AdminInformasiLayout />}>
+            <Route index element={<AdminBerita />} />
+            <Route path="berita" element={<AdminBerita />} />
+            <Route path="alur" element={<AdminAlurPendaftaran />} />
+            <Route path="penting" element={<AdminInfoPenting />} />
+          </Route>
+          
           {/* Rute admin lainnya akan ditambahkan di fase selanjutnya */}
         </Route>
       </Routes>
     </BrowserRouter>
   );
 }
+
+// Trigger IDE refresh

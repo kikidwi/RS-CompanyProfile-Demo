@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../lib/firebase";
 import { Link } from "react-router";
 import {
   ChevronRight,
@@ -34,7 +36,7 @@ type Doctor = {
 /* ─────────────────────────────────────────────
    DATA – 16 dokter, 8 spesialisasi
 ───────────────────────────────────────────── */
-const doctors: Doctor[] = [
+export const defaultDoctors: Doctor[] = [
   {
     id: 1,
     name: "dr. Ahmad Fauzi",
@@ -357,7 +359,6 @@ const doctors: Doctor[] = [
 ];
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-const specialties = ["Semua", ...Array.from(new Set(doctors.map((d) => d.specialty)))];
 
 const specialtyColors: Record<string, string> = {
   Kardiologi: "#006370",
@@ -594,9 +595,49 @@ export default function Dokter() {
   const [activeDay, setActiveDay] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showSpecialtyDropdown, setShowSpecialtyDropdown] = useState(false);
+  const [doctorsData, setDoctorsData] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "dokter"));
+        if (!snap.empty) {
+          const items: Doctor[] = [];
+          snap.forEach((d) => {
+            const data = d.data();
+            items.push({
+              id: d.id as any,
+              name: data.name,
+              title: data.title,
+              specialty: data.specialty,
+              polyclinic: data.polyclinic,
+              image: data.image,
+              schedule: data.schedule || [],
+              education: data.education || [],
+              experience: data.experience,
+              bio: data.bio,
+              languages: data.languages || [],
+            });
+          });
+          setDoctorsData(items);
+        } else {
+          setDoctorsData(defaultDoctors);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data dokter dari database:", err);
+        setDoctorsData(defaultDoctors);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const specialties = useMemo(() => ["Semua", ...Array.from(new Set(doctorsData.map((d) => d.specialty)))], [doctorsData]);
 
   const filtered = useMemo(() => {
-    return doctors.filter((d) => {
+    return doctorsData.filter((d) => {
       const matchSearch =
         d.name.toLowerCase().includes(search.toLowerCase()) ||
         d.specialty.toLowerCase().includes(search.toLowerCase()) ||
@@ -740,7 +781,7 @@ export default function Dokter() {
         <div className="flex items-center justify-between mb-6">
           <p className="text-gray-500 text-sm">
             Menampilkan <span className="font-bold text-gray-800">{filtered.length}</span> dari{" "}
-            <span className="font-bold text-gray-800">{doctors.length}</span> dokter
+            <span className="font-bold text-gray-800">{doctorsData.length}</span> dokter
           </p>
           {(search || activeSpecialty !== "Semua" || activeDay) && (
             <button
@@ -756,8 +797,9 @@ export default function Dokter() {
           )}
         </div>
 
-        {/* Grid */}
-        {filtered.length > 0 ? (
+        {loading ? (
+          <div className="py-24 text-center text-gray-500">Memuat data dokter...</div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filtered.map((doc) => (
               <DoctorCard
@@ -775,6 +817,8 @@ export default function Dokter() {
           </div>
         )}
       </div>
+
+
 
       {/* ── CTA Banner ── */}
       <div className="bg-gradient-to-r from-[#006370] to-[#3b9ca5] py-12 px-4 md:px-16">

@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BedDouble, Search, RefreshCw } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 
 type BedStatus = "available" | "occupied" | "maintenance";
 
@@ -14,7 +16,7 @@ type Room = {
   since?: string;
 };
 
-const generateRooms = (): Room[] => {
+export const defaultGenerateRooms = (): Room[] => {
   const wards = [
     { name: "Penyakit Dalam", class: "Kelas I", floor: 2 },
     { name: "Bedah", class: "Kelas II", floor: 3 },
@@ -49,9 +51,9 @@ const generateRooms = (): Room[] => {
   return rooms;
 };
 
-const allRooms = generateRooms();
+export const defaultAllRooms = defaultGenerateRooms();
 
-const wardOptions = ["Semua Ruangan", ...Array.from(new Set(allRooms.map((r) => r.ward)))];
+const wardOptions = ["Semua Ruangan", ...Array.from(new Set(defaultAllRooms.map((r) => r.ward)))];
 const statusLabels: Record<BedStatus, string> = {
   available: "Tersedia",
   occupied: "Terisi",
@@ -67,12 +69,40 @@ export default function KetersediaanKamar() {
   const [search, setSearch] = useState("");
   const [wardFilter, setWardFilter] = useState("Semua Ruangan");
   const [statusFilter, setStatusFilter] = useState<"all" | BedStatus>("all");
-  const [lastUpdated] = useState(() => {
+  const [lastUpdated, setLastUpdated] = useState(() => {
     const now = new Date();
     return now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
   });
+  const [roomsData, setRoomsData] = useState(defaultAllRooms);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = allRooms.filter((room) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "ketersediaan_kamar"));
+        if (!snap.empty) {
+          const items: any[] = [];
+          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
+          // sort by floor and number
+          items.sort((a, b) => {
+            if (a.floor === b.floor) {
+              return a.number.localeCompare(b.number);
+            }
+            return a.floor - b.floor;
+          });
+          setRoomsData(items);
+        }
+      } catch (err) {
+        console.error("Gagal memuat ketersediaan kamar dari Firebase:", err);
+      } finally {
+        setLoading(false);
+        setLastUpdated(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filtered = roomsData.filter((room) => {
     const matchSearch =
       room.number.toLowerCase().includes(search.toLowerCase()) ||
       room.ward.toLowerCase().includes(search.toLowerCase());
@@ -82,9 +112,9 @@ export default function KetersediaanKamar() {
   });
 
   const totals = {
-    available: allRooms.filter((r) => r.status === "available").length,
-    occupied: allRooms.filter((r) => r.status === "occupied").length,
-    maintenance: allRooms.filter((r) => r.status === "maintenance").length,
+    available: roomsData.filter((r) => r.status === "available").length,
+    occupied: roomsData.filter((r) => r.status === "occupied").length,
+    maintenance: roomsData.filter((r) => r.status === "maintenance").length,
   };
 
   return (
@@ -142,8 +172,11 @@ export default function KetersediaanKamar() {
       </div>
 
       {/* Room Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-10">
-        {filtered.map((room) => {
+      {loading ? (
+        <div className="py-12 text-center text-gray-500">Memuat data ketersediaan kamar...</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-10">
+          {filtered.map((room) => {
           const col = statusColors[room.status];
           return (
             <div
@@ -168,6 +201,7 @@ export default function KetersediaanKamar() {
           );
         })}
       </div>
+      )}
 
       {filtered.length === 0 && (
         <div className="text-center py-16 text-gray-400">

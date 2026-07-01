@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 import {
   Clock,
   Phone,
@@ -19,12 +21,12 @@ import {
 type InfoSection = {
   id: string;
   title: string;
-  icon: React.ElementType;
-  color: string;
+  icon?: React.ElementType;
+  color?: string;
   items: { label: string; value?: string; detail?: string; highlight?: boolean }[];
 };
 
-const sections: InfoSection[] = [
+export const defaultSections: InfoSection[] = [
   {
     id: "jam-operasional",
     title: "Jam Operasional",
@@ -184,6 +186,46 @@ function InfoAccordion({ section }: { section: InfoSection }) {
 }
 
 export default function InformasiPenting() {
+  const [sectionsData, setSectionsData] = useState<InfoSection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "informasi_penting"));
+        if (!snap.empty) {
+          const items: InfoSection[] = [];
+          snap.forEach(doc => {
+            const data = doc.data() as InfoSection;
+            const def = defaultSections.find(s => s.id === data.id);
+            items.push({
+              ...data,
+              icon: def?.icon || Info,
+              color: def?.color || "#006370",
+            });
+          });
+          
+          const orderMap = new Map(defaultSections.map((s, i) => [s.id, i]));
+          items.sort((a, b) => (orderMap.get(a.id) || 0) - (orderMap.get(b.id) || 0));
+          
+          setSectionsData(items);
+        } else {
+          setSectionsData(defaultSections);
+        }
+      } catch (err) {
+        console.error("Gagal memuat info penting:", err);
+        setSectionsData(defaultSections);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-20 text-gray-500">Memuat data...</div>;
+  }
+
   return (
     <div className="w-full" style={{ fontFamily: "'Karla', sans-serif" }}>
       <h2 className="text-2xl font-bold text-[#006370] mb-1">Informasi Penting</h2>
@@ -218,7 +260,7 @@ export default function InformasiPenting() {
 
       {/* Accordion Sections */}
       <div className="space-y-4">
-        {sections.map((section) => (
+        {sectionsData.map((section) => (
           <InfoAccordion key={section.id} section={section} />
         ))}
       </div>

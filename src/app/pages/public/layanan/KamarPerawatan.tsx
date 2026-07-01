@@ -1,4 +1,7 @@
+import { useState, useEffect } from "react";
 import { BedDouble, Wifi, Tv, Wind, Coffee, Users, Star } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 
 type RoomClass = {
   name: string;
@@ -13,7 +16,7 @@ type RoomClass = {
   image: string;
 };
 
-const roomClasses: RoomClass[] = [
+export const defaultRoomClasses: RoomClass[] = [
   {
     name: "Kelas III",
     kelas: "Kelas 3",
@@ -91,6 +94,43 @@ const roomClasses: RoomClass[] = [
 ];
 
 export default function KamarPerawatan() {
+  const [rooms, setRooms] = useState(defaultRoomClasses);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "layanan_kamar"));
+        if (!snap.empty) {
+          const items: any[] = [];
+          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
+          items.sort((a, b) => (a.order || 0) - (b.order || 0));
+          
+          // Map facility icons back if stored as string, but for simplicity
+          // let's just use the default roomClasses as the initial state,
+          // and if we fetch from DB, we'll map icon string to actual Lucide component.
+          const iconMap: any = {
+            BedDouble, Wind, Tv, Wifi, Users, Coffee, Star
+          };
+
+          const mappedItems = items.map(item => ({
+            ...item,
+            facilities: (item.facilities || []).map((f: any) => ({
+              ...f,
+              icon: typeof f.icon === 'string' ? (iconMap[f.icon] || BedDouble) : f.icon
+            }))
+          }));
+
+          setRooms(mappedItems);
+        }
+      } catch (err) {
+        console.error("Gagal memuat kamar perawatan dari Firebase:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   return (
     <div className="w-full" style={{ fontFamily: "'Karla', sans-serif" }}>
       {/* Header */}
@@ -102,7 +142,9 @@ export default function KamarPerawatan() {
 
       {/* Room Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {roomClasses.map((room, i) => (
+        {loading ? (
+          <div className="col-span-1 lg:col-span-2 py-12 text-center text-gray-500">Memuat data kamar...</div>
+        ) : rooms.map((room, i) => (
           <div
             key={i}
             className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col"

@@ -1,6 +1,9 @@
+import { useState, useEffect } from "react";
 import { CheckCircle, Star, Users, Clock, Award } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 
-const mcuPackages = [
+export const defaultMcuPackages = [
   {
     name: "MCU Basic",
     price: "Rp 350.000",
@@ -58,6 +61,27 @@ const stats = [
 ];
 
 export default function MedicalCheckup() {
+  const [packages, setPackages] = useState(defaultMcuPackages);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snap = await getDocs(collection(db, "layanan_mcu"));
+        if (!snap.empty) {
+          const items: any[] = [];
+          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
+          items.sort((a, b) => (a.order || 0) - (b.order || 0));
+          setPackages(items);
+        }
+      } catch (err) {
+        console.error("Gagal memuat MCU dari Firebase:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   return (
     <div className="w-full" style={{ fontFamily: "'Karla', sans-serif" }}>
       {/* Page Header */}
@@ -86,7 +110,9 @@ export default function MedicalCheckup() {
       {/* Packages */}
       <h3 className="text-xl font-bold text-gray-800 mb-6">Pilih Paket MCU Anda</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
-        {mcuPackages.map((pkg, i) => (
+        {loading ? (
+          <div className="col-span-1 md:col-span-3 py-12 text-center text-gray-500">Memuat paket MCU...</div>
+        ) : packages.map((pkg, i) => (
           <div
             key={i}
             className={`relative bg-white border-2 rounded-2xl overflow-hidden flex flex-col shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 ${
