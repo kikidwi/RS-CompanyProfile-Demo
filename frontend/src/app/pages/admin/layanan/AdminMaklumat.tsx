@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { Plus, Trash2, Pencil, X, Upload, ShieldCheck, Clock, Star, ThumbsUp, AlertCircle } from "lucide-react";
 import { defaultMaklumatItems } from "../../public/layanan/MaklumatPelayanan";
 
@@ -28,9 +27,8 @@ export default function AdminMaklumat() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, "layanan_maklumat"));
-      const items: any[] = [];
-      snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+      const response = await api.get('/service-pledges');
+      const items: any[] = response.data;
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
     } catch (err) {
@@ -58,7 +56,7 @@ export default function AdminMaklumat() {
           order: i,
         };
         Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-        return setDoc(doc(db, "layanan_maklumat", docId), payload);
+        return api.post('/service-pledges', payload);
       });
       await Promise.all(promises);
       setMessage({ type: "success", text: "Data default berhasil dimuat!" });
@@ -74,7 +72,7 @@ export default function AdminMaklumat() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus item ini?")) return;
     try {
-      await deleteDoc(doc(db, "layanan_maklumat", id));
+      await api.delete(`/service-pledges/${id}`);
       fetchData();
     } catch (err) {
       console.error(err);
@@ -123,7 +121,11 @@ export default function AdminMaklumat() {
       delete payload.id;
       // Filter empty
       payload.points = payload.points.filter((p: string) => p.trim() !== "");
-      await setDoc(doc(db, "layanan_maklumat", docId), payload);
+      if (formData.id) {
+        await api.put(`/service-pledges/${formData.id}`, payload);
+      } else {
+        await api.post('/service-pledges', payload);
+      }
       setIsModalOpen(false);
       fetchData();
     } catch (err) {

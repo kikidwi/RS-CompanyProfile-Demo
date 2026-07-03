@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { defaultFlows } from "../../public/informasi/AlurPendaftaran";
 import { Pencil, X, Save, Plus, Trash2 } from "lucide-react";
 
@@ -17,12 +16,16 @@ export default function AdminAlurPendaftaran() {
 
   const fetchData = async () => {
     try {
-      const snap = await getDocs(collection(db, "informasi_alur"));
-      if (!snap.empty) {
-        const items: AlurType[] = [];
-        snap.forEach(d => {
-          items.push(d.data() as AlurType);
-        });
+      const response = await api.get('/information?type=registration_flow');
+      if (response.data && response.data.length > 0) {
+        const items: AlurType[] = response.data.map((d: any) => ({
+          _dbId: d.id,
+          id: d.slug,
+          label: d.title,
+          description: d.excerpt || '',
+          steps: d.content || [],
+          requirements: d.tags_or_requirements || []
+        }));
         
         // Sort to match defaultFlows order
         const orderMap = new Map(defaultFlows.map((f, i) => [f.id, i]));
@@ -60,7 +63,20 @@ export default function AdminAlurPendaftaran() {
       const payload = { ...formData };
       delete (payload as any).icon; // Don't save React.ElementType to firestore
       
-      await setDoc(doc(db, "informasi_alur", payload.id), payload);
+      const apiPayload = {
+        type: 'registration_flow',
+        slug: payload.id,
+        title: payload.label,
+        excerpt: payload.description,
+        content: payload.steps,
+        tags_or_requirements: payload.requirements
+      };
+      
+      if ((payload as any)._dbId) {
+        await api.put(`/information/${(payload as any)._dbId}`, apiPayload);
+      } else {
+        await api.post('/information', apiPayload);
+      }
       setMessage({ type: "success", text: "Alur berhasil diperbarui!" });
       setEditingId(null);
       fetchData();
@@ -79,7 +95,15 @@ export default function AdminAlurPendaftaran() {
       for (const item of defaultFlows) {
         const payload = { ...item };
         delete (payload as any).icon;
-        await setDoc(doc(db, "informasi_alur", payload.id), payload);
+        const apiPayload = {
+          type: 'registration_flow',
+          slug: payload.id,
+          title: payload.label,
+          excerpt: payload.description,
+          content: payload.steps,
+          tags_or_requirements: payload.requirements
+        };
+        await api.post('/information', apiPayload);
       }
       setMessage({ type: "success", text: "Data default berhasil direstore!" });
       fetchData();

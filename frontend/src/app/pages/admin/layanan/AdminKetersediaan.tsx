@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { Plus, Trash2, Pencil, X, Upload } from "lucide-react";
 import { defaultAllRooms } from "../../public/layanan/KetersediaanKamar";
 
@@ -31,9 +30,8 @@ export default function AdminKetersediaan() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, "ketersediaan_kamar"));
-      const items: any[] = [];
-      snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+      const response = await api.get('/room-availabilities');
+      const items: any[] = response.data;
       // sort by floor then number
       items.sort((a, b) => {
         if (a.floor === b.floor) {
@@ -62,7 +60,7 @@ export default function AdminKetersediaan() {
         const docId = crypto.randomUUID();
         const payload: any = { ...room };
         Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-        return setDoc(doc(db, "ketersediaan_kamar", docId), payload);
+        return api.post('/room-availabilities', payload);
       });
       await Promise.all(promises);
       setMessage({ type: "success", text: "Data default berhasil dimuat!" });
@@ -78,7 +76,7 @@ export default function AdminKetersediaan() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus data kamar ini?")) return;
     try {
-      await deleteDoc(doc(db, "ketersediaan_kamar", id));
+      await api.delete(`/room-availabilities/${id}`);
       fetchData();
     } catch (err) {
       console.error(err);
@@ -119,7 +117,11 @@ export default function AdminKetersediaan() {
       if (!payload.patient) delete payload.patient;
       if (!payload.since) delete payload.since;
 
-      await setDoc(doc(db, "ketersediaan_kamar", docId), payload);
+      if (formData.id) {
+        await api.put(`/room-availabilities/${formData.id}`, payload);
+      } else {
+        await api.post('/room-availabilities', payload);
+      }
       setIsModalOpen(false);
       fetchData();
     } catch (err) {

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import {
   ClipboardList,
   MonitorSmartphone,
@@ -240,18 +239,16 @@ export default function AlurPendaftaran() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "informasi_alur"));
-        if (!snap.empty) {
-          const items: RegistrationFlow[] = [];
-          snap.forEach(doc => {
-            const data = doc.data() as RegistrationFlow;
-            // Merge with default to get icon and color
+        const response = await api.get('/information?type=alur-pendaftaran');
+        if (response.data && response.data.length > 0) {
+          const items = response.data.map((d: any) => {
+            const data = { id: d.id.toString(), ...d.content };
             const def = defaultFlows.find(f => f.id === data.id);
-            items.push({
+            return {
               ...data,
               icon: def?.icon || ClipboardList,
               color: def?.color || "#006370",
-            });
+            };
           });
           
           // Sort to match defaultFlows order

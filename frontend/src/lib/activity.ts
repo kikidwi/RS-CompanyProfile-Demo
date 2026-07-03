@@ -1,17 +1,19 @@
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
+import api from "./api";
 
 export type ActivityAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'SYSTEM';
 
-export const logActivity = async (action: ActivityAction, moduleName: string, detail: string) => {
+export async function logActivity(
+  action: ActivityAction,
+  moduleName: string,
+  detail: string
+) {
   try {
-    await addDoc(collection(db, "activities"), {
+    await api.post('/activity-logs', {
       action,
       moduleName,
-      detail,
-      timestamp: serverTimestamp(),
+      detail
     });
   } catch (error) {
-    console.error("Gagal menyimpan log aktivitas:", error);
+    console.error("Gagal mencatat log aktivitas:", error);
   }
 };

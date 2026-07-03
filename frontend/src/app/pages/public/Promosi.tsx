@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
+import api from "../../../lib/api";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 
 /* ─────────────────────────────────────────────
@@ -147,15 +146,14 @@ export default function Promosi() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "promosi"));
-        if (!snap.empty) {
-          const items: Promo[] = [];
-          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() } as Promo));
-          items.sort((a, b) => (a.order || 0) - (b.order || 0));
+        const response = await api.get('/promotions');
+        if (response.data && response.data.length > 0) {
+          const items = response.data.map((d: any) => ({ ...d, id: d.id.toString() }));
+          items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
           setPromos(items);
         }
       } catch (err) {
-        console.error("Gagal memuat promosi dari Firebase:", err);
+        console.error("Gagal memuat promosi dari API:", err);
       } finally {
         setLoading(false);
       }

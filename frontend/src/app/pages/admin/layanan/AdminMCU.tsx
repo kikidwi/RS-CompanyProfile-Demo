@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { Plus, Trash2, Pencil, X, Upload } from "lucide-react";
 import { defaultMcuPackages } from "../../public/layanan/MedicalCheckup";
 
@@ -25,9 +24,8 @@ export default function AdminMCU() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, "layanan_mcu"));
-      const items: any[] = [];
-      snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+      const response = await api.get('/mcu-packages');
+      const items: any[] = response.data;
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
     } catch (err) {
@@ -53,7 +51,7 @@ export default function AdminMCU() {
           order: i,
         };
         Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-        return setDoc(doc(db, "layanan_mcu", docId), payload);
+        return api.post('/mcu-packages', payload);
       });
       await Promise.all(promises);
       setMessage({ type: "success", text: "Data default berhasil dimuat!" });
@@ -69,7 +67,7 @@ export default function AdminMCU() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus paket MCU ini?")) return;
     try {
-      await deleteDoc(doc(db, "layanan_mcu", id));
+      await api.delete(`/mcu-packages/${id}`);
       fetchData();
     } catch (err) {
       console.error(err);
@@ -113,12 +111,16 @@ export default function AdminMCU() {
     e.preventDefault();
     setSaving(true);
     try {
-      const docId = formData.id || crypto.randomUUID();
       const payload = { ...formData };
-      delete payload.id;
+      
       // Filter empty items
       payload.items = payload.items.filter((i: string) => i.trim() !== "");
-      await setDoc(doc(db, "layanan_mcu", docId), payload);
+      
+      if (formData.id) {
+        await api.put(`/mcu-packages/${formData.id}`, payload);
+      } else {
+        await api.post('/mcu-packages', payload);
+      }
       setIsModalOpen(false);
       fetchData();
     } catch (err) {

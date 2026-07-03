@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 const defaultPeople = [
   {
@@ -30,15 +29,17 @@ export default function DewanPengawas() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "profil_dewan_pengawas"));
-        if (!snap.empty) {
-          const items: any[] = [];
-          snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
-          items.sort((a, b) => (a.order || 0) - (b.order || 0));
-          setPengawasData(items);
-        } else {
-          setPengawasData(defaultPeople);
-        }
+        const response = await api.get('/profiles?type=dewan-pengawas');
+        const items = response.data.map((d: any) => ({
+          id: d.id.toString(),
+          name: d.name,
+          role: d.role,
+          institution: d.content?.institution || "",
+          photo: d.image || "",
+          order: d.order || 0
+        }));
+        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+        setPengawasData(items);
       } catch (err) {
         console.error("Gagal mengambil data dewan pengawas:", err);
         setPengawasData(defaultPeople);

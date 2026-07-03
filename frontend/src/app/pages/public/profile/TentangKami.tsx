@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 const defaultData = {
   paragraf1: "Rumah Sakit Utama Demo merupakan rumah sakit umum bertipe A yang berfokus pada penyelenggaraan pelayanan kesehatan terpadu dengan standar internasional. Didirikan pada tahun 2005, kami berawal dari sebuah klinik kesehatan masyarakat kecil yang perlahan berkembang menjadi salah satu pusat rujukan unggulan di kawasan ini.",
@@ -18,11 +17,11 @@ export default function TentangKami() {
   const [data, setData] = useState(defaultData);
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
       try {
-        const docSnap = await getDoc(doc(db, "profil", "tentang-kami"));
-        if (docSnap.exists()) {
-          const d = docSnap.data();
+        const response = await api.get('/profiles?type=tentang-kami');
+        if (response.data && response.data.length > 0) {
+          const d = response.data[0].content;
           setData({
             paragraf1: d.paragraf1 || defaultData.paragraf1,
             paragraf2: d.paragraf2 || defaultData.paragraf2,
@@ -31,8 +30,8 @@ export default function TentangKami() {
             akreditasi: d.akreditasi || defaultData.akreditasi,
           });
         }
-      } catch (error) {
-        console.error("Error fetching tentang kami:", error);
+      } catch (err) {
+        console.error("Gagal memuat profil:", err);
       }
     }
     fetchData();

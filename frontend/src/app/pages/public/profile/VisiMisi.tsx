@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 const defaultData = {
   visi: "Menjadi Rumah Sakit Rujukan Nasional Terdepan yang Mengedepankan Pelayanan Medis Paripurna, Inovatif, dan Berkeadilan bagi Seluruh Lapisan Masyarakat di Tahun 2030.",
@@ -27,11 +26,11 @@ export default function VisiMisi() {
   const [data, setData] = useState(defaultData);
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
       try {
-        const docSnap = await getDoc(doc(db, "profil", "visi-misi"));
-        if (docSnap.exists()) {
-          const d = docSnap.data();
+        const response = await api.get('/profiles?type=visi-misi');
+        if (response.data && response.data.length > 0) {
+          const d = response.data[0].content;
           setData({
             visi: d.visi || defaultData.visi,
             misi: d.misi || defaultData.misi,
@@ -39,10 +38,10 @@ export default function VisiMisi() {
             tagline: d.tagline || defaultData.tagline,
           });
         }
-      } catch (error) {
-        console.error("Error fetching visi misi:", error);
+      } catch (err) {
+        console.error("Gagal memuat visi misi:", err);
       }
-    }
+    };
     fetchData();
   }, []);
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 export default function AdminVisiMisi() {
   const defaultData = {
@@ -28,19 +27,24 @@ export default function AdminVisiMisi() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [dbId, setDbId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const docSnap = await getDoc(doc(db, "profil", "visi-misi"));
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setFormData({
-            visi: data.visi || "",
-            misi: data.misi || ["", "", "", "", ""],
-            nilaiBudaya: data.nilaiBudaya || formData.nilaiBudaya,
-            tagline: data.tagline || "",
-          });
+        const response = await api.get('/profiles?type=visi-misi');
+        if (response.data && response.data.length > 0) {
+          const item = response.data[0];
+          setDbId(item.id);
+          if (item.content) {
+            const data = item.content;
+            setFormData({
+              visi: data.visi || "",
+              misi: data.misi || ["", "", "", "", ""],
+              nilaiBudaya: data.nilaiBudaya || formData.nilaiBudaya,
+              tagline: data.tagline || "",
+            });
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -56,7 +60,13 @@ export default function AdminVisiMisi() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      await setDoc(doc(db, "profil", "visi-misi"), formData);
+      const payload = { type: 'visi-misi', content: formData };
+      if (dbId) {
+        await api.put(`/profiles/${dbId}`, payload);
+      } else {
+        const res = await api.post('/profiles', payload);
+        setDbId(res.data.id);
+      }
       setMessage({ type: "success", text: "Data Visi & Misi berhasil disimpan!" });
     } catch (error) {
       console.error(error);

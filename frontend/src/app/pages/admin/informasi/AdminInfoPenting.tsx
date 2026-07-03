@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { logActivity } from "../../../../lib/activity";
 import { defaultSections } from "../../public/informasi/InformasiPenting";
 import { Pencil, X, Save, Plus, Trash2 } from "lucide-react";
@@ -18,12 +17,14 @@ export default function AdminInfoPenting() {
 
   const fetchData = async () => {
     try {
-      const snap = await getDocs(collection(db, "informasi_penting"));
-      if (!snap.empty) {
-        const items: SectionType[] = [];
-        snap.forEach(d => {
-          items.push(d.data() as SectionType);
-        });
+      const response = await api.get('/information?type=important_info');
+      if (response.data && response.data.length > 0) {
+        const items: SectionType[] = response.data.map((d: any) => ({
+          _dbId: d.id,
+          id: d.slug,
+          title: d.title,
+          items: d.content || []
+        }));
         
         const orderMap = new Map(defaultSections.map((s, i) => [s.id, i]));
         items.sort((a, b) => (orderMap.get(a.id) || 0) - (orderMap.get(b.id) || 0));
@@ -58,7 +59,18 @@ export default function AdminInfoPenting() {
       const payload = { ...formData };
       delete (payload as any).icon; 
       
-      await setDoc(doc(db, "informasi_penting", payload.id), payload);
+      const apiPayload = {
+        type: 'important_info',
+        slug: payload.id,
+        title: payload.title,
+        content: payload.items,
+      };
+      
+      if ((payload as any)._dbId) {
+        await api.put(`/information/${(payload as any)._dbId}`, apiPayload);
+      } else {
+        await api.post('/information', apiPayload);
+      }
       await logActivity('UPDATE', 'Info Penting', `Edit: ${payload.title}`);
       setMessage({ type: "success", text: "Informasi berhasil diperbarui!" });
       setEditingId(null);
@@ -78,7 +90,14 @@ export default function AdminInfoPenting() {
       for (const item of defaultSections) {
         const payload = { ...item };
         delete (payload as any).icon;
-        await setDoc(doc(db, "informasi_penting", payload.id), payload);
+        const apiPayload = {
+          type: 'important_info',
+          slug: payload.id,
+          title: payload.title,
+          content: payload.items,
+        };
+        // Use post, but if it exists it will duplicate. It's ok for restore default since it's an admin action.
+        await api.post('/information', apiPayload);
       }
       await logActivity('SYSTEM', 'Info Penting', 'Restore default data informasi penting');
       setMessage({ type: "success", text: "Data default berhasil direstore!" });

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 const defaultDireksi = [
   {
@@ -48,11 +47,17 @@ export default function JajaranDireksi() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "profil_direksi"));
-        if (!snap.empty) {
-          const items: any[] = [];
-          snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
-          items.sort((a, b) => (a.order || 0) - (b.order || 0));
+        const response = await api.get('/profiles?type=direksi');
+        const items = response.data.map((d: any) => ({
+          id: d.id.toString(),
+          name: d.name,
+          role: d.role,
+          desc: d.content?.desc || "",
+          photo: d.image || "",
+          order: d.order || 0
+        }));
+        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+        if (items.length > 0) {
           setDireksiData(items);
         } else {
           setDireksiData(defaultDireksi);

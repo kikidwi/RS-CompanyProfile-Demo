@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { Calendar, Clock, ArrowRight, Search, X, BookOpen } from "lucide-react";
 import { articles as defaultArticles, categoryConfig, type ArticleCategory, type Article } from "./articlesData";
 
@@ -87,11 +86,10 @@ export default function BeritaArtikel() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "informasi_berita"));
-        if (!snap.empty) {
-          const items: Article[] = [];
-          snap.forEach(doc => items.push({ ...doc.data() } as Article));
-          items.sort((a, b) => b.id - a.id);
+        const response = await api.get('/information?type=berita');
+        if (response.data && response.data.length > 0) {
+          const items = response.data.map((d: any) => ({ id: d.id.toString(), ...d.content }));
+          items.sort((a: any, b: any) => b.id - a.id);
           setArticlesData(items);
         } else {
           setArticlesData(defaultArticles);

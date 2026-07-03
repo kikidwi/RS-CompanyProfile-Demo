@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router";
-import { collection, getDocs, query, where, limit } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { Calendar, Clock, Tag, ChevronRight, ArrowLeft, Share2, User, Check } from "lucide-react";
 import { articles as defaultArticles, categoryConfig, type Article } from "./articlesData";
 
@@ -19,28 +18,18 @@ export default function BeritaArtikelDetail() {
       window.scrollTo(0, 0);
 
       try {
-        const q = query(collection(db, "informasi_berita"), where("slug", "==", slug), limit(1));
-        const snap = await getDocs(q);
-        
-        let currentArticle: Article | undefined;
-
-        if (!snap.empty) {
-          currentArticle = snap.docs[0].data() as Article;
+        const response = await api.get('/information?type=berita');
+        let allArticles: Article[] = [];
+        if (response.data && response.data.length > 0) {
+          allArticles = response.data.map((d: any) => ({ id: d.id.toString(), ...d.content }));
         } else {
-          currentArticle = defaultArticles.find((a) => a.slug === slug);
+          allArticles = [...defaultArticles];
         }
+
+        const currentArticle = allArticles.find(a => a.slug === slug);
 
         if (currentArticle) {
           setArticle(currentArticle);
-          
-          // Fetch related
-          const allSnap = await getDocs(collection(db, "informasi_berita"));
-          const allArticles: Article[] = [];
-          if (!allSnap.empty) {
-            allSnap.forEach(d => allArticles.push(d.data() as Article));
-          } else {
-            allArticles.push(...defaultArticles);
-          }
           
           setRelated(
             allArticles

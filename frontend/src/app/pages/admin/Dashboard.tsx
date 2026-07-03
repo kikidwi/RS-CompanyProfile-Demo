@@ -1,8 +1,7 @@
 import { Users, FileText, Bed, Tag, Plus, Edit2, Trash2, Settings, Clock } from "lucide-react";
 import { Link } from "react-router";
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
+import api from "../../../lib/api";
 import type { ActivityAction } from "../../../lib/activity";
 
 interface Activity {
@@ -17,16 +16,15 @@ export default function Dashboard() {
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
-    const q = query(collection(db, "activities"), orderBy("timestamp", "desc"), limit(10));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data: Activity[] = [];
-      snapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...doc.data() } as Activity);
-      });
-      setActivities(data);
-    });
-
-    return () => unsubscribe();
+    const fetchActivities = async () => {
+      try {
+        const response = await api.get('/activity-logs');
+        setActivities(response.data.slice(0, 10));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchActivities();
   }, []);
 
   const getActionIcon = (action: ActivityAction) => {
@@ -51,7 +49,7 @@ export default function Dashboard() {
 
   const formatTimeAgo = (timestamp: any) => {
     if (!timestamp) return "Baru saja";
-    const date = timestamp.toDate();
+    const date = new Date(timestamp);
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
     
     if (seconds < 60) return "Baru saja";

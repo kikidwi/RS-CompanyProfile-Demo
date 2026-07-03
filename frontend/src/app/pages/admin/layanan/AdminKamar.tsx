@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { Plus, Trash2, Pencil, X, Upload, BedDouble, Wind, Tv, Wifi, Users, Coffee, Star } from "lucide-react";
 import { defaultRoomClasses } from "../../public/layanan/KamarPerawatan";
 
@@ -32,9 +31,8 @@ export default function AdminKamar() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, "layanan_kamar"));
-      const items: any[] = [];
-      snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+      const response = await api.get('/rooms');
+      const items: any[] = response.data;
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
     } catch (err) {
@@ -67,7 +65,7 @@ export default function AdminKamar() {
           order: i,
         };
         Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-        return setDoc(doc(db, "layanan_kamar", docId), payload);
+        return api.post('/rooms', payload);
       });
       await Promise.all(promises);
       setMessage({ type: "success", text: "Data default berhasil dimuat!" });
@@ -83,7 +81,7 @@ export default function AdminKamar() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus kamar ini?")) return;
     try {
-      await deleteDoc(doc(db, "layanan_kamar", id));
+      await api.delete(`/rooms/${id}`);
       fetchData();
     } catch (err) {
       console.error(err);
@@ -136,7 +134,11 @@ export default function AdminKamar() {
       delete payload.id;
       // Filter empty
       payload.facilities = payload.facilities.filter((f: any) => f.label.trim() !== "");
-      await setDoc(doc(db, "layanan_kamar", docId), payload);
+      if (formData.id) {
+        await api.put(`/rooms/${formData.id}`, payload);
+      } else {
+        await api.post('/rooms', payload);
+      }
       setIsModalOpen(false);
       fetchData();
     } catch (err) {

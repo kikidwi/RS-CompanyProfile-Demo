@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
+import api from "../../../lib/api";
 import { logActivity } from "../../../lib/activity";
 import { Plus, Trash2, Pencil, X, Upload, Image as ImageIcon } from "lucide-react";
 import { defaultPromos, Promo, categories, Category } from "../public/Promosi";
@@ -21,9 +20,8 @@ export default function AdminPromosi() {
 
   const fetchData = async () => {
     try {
-      const snap = await getDocs(collection(db, "promosi"));
-      const items: Promo[] = [];
-      snap.forEach(doc => items.push({ id: doc.id, ...doc.data() } as Promo));
+      const response = await api.get('/promotions');
+      const items: Promo[] = response.data;
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
     } catch (err) {
@@ -61,7 +59,12 @@ export default function AdminPromosi() {
       const id = formData.id || Date.now().toString();
       const payload = { ...formData, id };
 
-      await setDoc(doc(db, "promosi", id), payload);
+      if (formData.id) {
+        await api.put(`/promotions/${formData.id}`, payload);
+      } else {
+        const createRes = await api.post('/promotions', payload);
+        payload.id = createRes.data.id;
+      }
       await logActivity(formData.id ? 'UPDATE' : 'CREATE', 'Promosi', `Promo ${payload.title}`);
       
       setMessage({ type: "success", text: "Promo berhasil disimpan!" });
@@ -80,7 +83,7 @@ export default function AdminPromosi() {
     if (confirm("Yakin ingin menghapus promo ini?")) {
       try {
         const docItem = data.find(d => d.id === id);
-        await deleteDoc(doc(db, "promosi", id));
+        await api.delete(`/promotions/${id}`);
         await logActivity('DELETE', 'Promosi', `Promo ${docItem?.title || 'ID ' + id}`);
         setMessage({ type: "success", text: "Promo berhasil dihapus!" });
         fetchData();
@@ -97,8 +100,7 @@ export default function AdminPromosi() {
     try {
       for (let i = 0; i < defaultPromos.length; i++) {
         const promo = defaultPromos[i];
-        const id = `default-${i}`;
-        await setDoc(doc(db, "promosi", id), { ...promo, order: i });
+        await api.post('/promotions', { ...promo, order: i });
       }
       await logActivity('SYSTEM', 'Promosi', 'Import data default promosi');
       setMessage({ type: "success", text: "Data default berhasil dimuat!" });

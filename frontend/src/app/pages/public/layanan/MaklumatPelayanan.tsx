@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import * as lucideIcons from "lucide-react";
 import { ShieldCheck, Clock, Star, ThumbsUp, AlertCircle } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 export const defaultMaklumatItems = [
   {
@@ -73,19 +73,15 @@ export default function MaklumatPelayanan() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "layanan_maklumat"));
-        if (!snap.empty) {
-          const items: any[] = [];
-          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
-          items.sort((a, b) => (a.order || 0) - (b.order || 0));
-          
-          const iconMap: any = {
-            ShieldCheck, Clock, Star, ThumbsUp, AlertCircle
-          };
-
-          const mappedItems = items.map(item => ({
+        const response = await api.get('/service-pledges');
+        const items = response.data;
+        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+        
+        if (items.length > 0) {
+          const mappedItems = items.map((item: any) => ({
             ...item,
-            icon: typeof item.icon === 'string' ? (iconMap[item.icon] || AlertCircle) : item.icon
+            id: item.id.toString(),
+            icon: (lucideIcons as any)[item.icon] || AlertCircle
           }));
 
           setMaklumat(mappedItems);

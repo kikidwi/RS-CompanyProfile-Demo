@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { BedDouble, Wifi, Tv, Wind, Coffee, Users, Star } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 type RoomClass = {
   name: string;
@@ -100,11 +99,10 @@ export default function KamarPerawatan() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "layanan_kamar"));
-        if (!snap.empty) {
-          const items: any[] = [];
-          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
-          items.sort((a, b) => (a.order || 0) - (b.order || 0));
+        const response = await api.get('/rooms');
+        if (response.data && response.data.length > 0) {
+          const items: any[] = response.data;
+          items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
           
           // Map facility icons back if stored as string, but for simplicity
           // let's just use the default roomClasses as the initial state,

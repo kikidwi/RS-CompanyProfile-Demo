@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 export default function AdminTentangKami() {
   const defaultData = {
@@ -19,24 +18,29 @@ export default function AdminTentangKami() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [dbId, setDbId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const docSnap = await getDoc(doc(db, "profil", "tentang-kami"));
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setFormData({
-            paragraf1: data.paragraf1 || "",
-            paragraf2: data.paragraf2 || "",
-            paragraf3: data.paragraf3 || "",
-            keunggulan: data.keunggulan || [
-              { title: "", desc: "" },
-              { title: "", desc: "" },
-              { title: "", desc: "" },
-            ],
-            akreditasi: data.akreditasi || "",
-          });
+        const response = await api.get('/profiles?type=tentang-kami');
+        if (response.data && response.data.length > 0) {
+          const item = response.data[0];
+          setDbId(item.id);
+          if (item.content) {
+            const data = item.content;
+            setFormData({
+              paragraf1: data.paragraf1 || "",
+              paragraf2: data.paragraf2 || "",
+              paragraf3: data.paragraf3 || "",
+              keunggulan: data.keunggulan || [
+                { title: "", desc: "" },
+                { title: "", desc: "" },
+                { title: "", desc: "" },
+              ],
+              akreditasi: data.akreditasi || "",
+            });
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -52,7 +56,13 @@ export default function AdminTentangKami() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      await setDoc(doc(db, "profil", "tentang-kami"), formData);
+      const payload = { type: 'tentang-kami', content: formData };
+      if (dbId) {
+        await api.put(`/profiles/${dbId}`, payload);
+      } else {
+        const res = await api.post('/profiles', payload);
+        setDbId(res.data.id);
+      }
       setMessage({ type: "success", text: "Data Tentang Kami berhasil disimpan!" });
     } catch (error) {
       console.error(error);

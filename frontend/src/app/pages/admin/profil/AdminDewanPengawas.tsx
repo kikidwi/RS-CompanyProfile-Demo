@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { Plus, Trash2, Pencil } from "lucide-react";
 
 interface PengawasData {
@@ -23,9 +22,15 @@ export default function AdminDewanPengawas() {
 
   const fetchData = async () => {
     try {
-      const snap = await getDocs(collection(db, "profil_dewan_pengawas"));
-      const items: PengawasData[] = [];
-      snap.forEach((d) => items.push({ id: d.id, ...d.data() } as PengawasData));
+      const response = await api.get('/profiles?type=dewan-pengawas');
+      const items: PengawasData[] = response.data.map((d: any) => ({
+        id: d.id.toString(),
+        name: d.name,
+        role: d.role,
+        institution: d.content?.institution || "",
+        photo: d.image || "",
+        order: d.order || 0
+      }));
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
     } catch (err) {
@@ -54,8 +59,20 @@ export default function AdminDewanPengawas() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const docId = editingId || crypto.randomUUID();
-      await setDoc(doc(db, "profil_dewan_pengawas", docId), formData);
+      const payload = {
+        type: 'dewan-pengawas',
+        name: formData.name,
+        role: formData.role,
+        image: formData.photo,
+        order: formData.order,
+        content: { institution: formData.institution }
+      };
+      
+      if (editingId) {
+        await api.put(`/profiles/${editingId}`, payload);
+      } else {
+        await api.post('/profiles', payload);
+      }
       setIsModalOpen(false);
       setMessage({ type: "success", text: editingId ? "Data berhasil diperbarui!" : "Data berhasil ditambahkan!" });
       fetchData();
@@ -70,7 +87,7 @@ export default function AdminDewanPengawas() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus data ini?")) return;
     try {
-      await deleteDoc(doc(db, "profil_dewan_pengawas", id));
+      await api.delete(`/profiles/${id}`);
       fetchData();
     } catch (err) {
       console.error(err);

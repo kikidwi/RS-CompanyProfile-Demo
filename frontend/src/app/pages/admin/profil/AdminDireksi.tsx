@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { Plus, Trash2, Pencil } from "lucide-react";
 
 interface DireksiData {
@@ -23,9 +22,15 @@ export default function AdminDireksi() {
 
   const fetchData = async () => {
     try {
-      const snap = await getDocs(collection(db, "profil_direksi"));
-      const items: DireksiData[] = [];
-      snap.forEach((d) => items.push({ id: d.id, ...d.data() } as DireksiData));
+      const response = await api.get('/profiles?type=direksi');
+      const items: DireksiData[] = response.data.map((d: any) => ({
+        id: d.id.toString(),
+        name: d.name,
+        role: d.role,
+        desc: d.content?.desc || "",
+        photo: d.image || "",
+        order: d.order || 0
+      }));
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
     } catch (err) {
@@ -54,8 +59,20 @@ export default function AdminDireksi() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const docId = editingId || crypto.randomUUID();
-      await setDoc(doc(db, "profil_direksi", docId), formData);
+      const payload = {
+        type: 'direksi',
+        name: formData.name,
+        role: formData.role,
+        image: formData.photo,
+        order: formData.order,
+        content: { desc: formData.desc }
+      };
+      
+      if (editingId) {
+        await api.put(`/profiles/${editingId}`, payload);
+      } else {
+        await api.post('/profiles', payload);
+      }
       setIsModalOpen(false);
       setMessage({ type: "success", text: editingId ? "Data berhasil diperbarui!" : "Data berhasil ditambahkan!" });
       fetchData();
@@ -70,7 +87,7 @@ export default function AdminDireksi() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus data ini?")) return;
     try {
-      await deleteDoc(doc(db, "profil_direksi", id));
+      await api.delete(`/profiles/${id}`);
       fetchData();
     } catch (err) {
       console.error(err);

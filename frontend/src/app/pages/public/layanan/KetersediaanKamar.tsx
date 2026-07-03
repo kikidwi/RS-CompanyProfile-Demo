@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { BedDouble, Search, RefreshCw } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 type BedStatus = "available" | "occupied" | "maintenance";
 
@@ -79,10 +78,9 @@ export default function KetersediaanKamar() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "ketersediaan_kamar"));
-        if (!snap.empty) {
-          const items: any[] = [];
-          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
+        const response = await api.get('/room-availabilities');
+        if (response.data && response.data.length > 0) {
+          const items: any[] = response.data;
           // sort by floor and number
           items.sort((a, b) => {
             if (a.floor === b.floor) {

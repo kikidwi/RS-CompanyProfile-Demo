@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, Star, Users, Clock, Award } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 export const defaultMcuPackages = [
   {
@@ -67,15 +66,12 @@ export default function MedicalCheckup() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "layanan_mcu"));
-        if (!snap.empty) {
-          const items: any[] = [];
-          snap.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
-          items.sort((a, b) => (a.order || 0) - (b.order || 0));
-          setPackages(items);
-        }
+        const response = await api.get('/mcu-packages');
+        const items = response.data;
+        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+        if (items.length > 0) setPackages(items);
       } catch (err) {
-        console.error("Gagal memuat MCU dari Firebase:", err);
+        console.error("Gagal memuat MCU dari API:", err);
       } finally {
         setLoading(false);
       }

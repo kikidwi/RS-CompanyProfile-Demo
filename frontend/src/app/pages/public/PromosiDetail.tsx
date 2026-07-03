@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { doc, getDoc, collection, getDocs, query, limit } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
+import api from "../../../lib/api";
 import { ChevronRight, Phone } from "lucide-react";
 import { defaultPromos, Promo } from "./Promosi";
 
@@ -30,11 +29,11 @@ export default function PromosiDetail() {
               currentPromo = { ...defaultPromos[index], id: index.toString() };
             }
           } else {
-            // Fetch from Firebase
-            const docRef = doc(db, "promosi", id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-              currentPromo = { id: docSnap.id, ...docSnap.data() } as Promo;
+            try {
+              const response = await api.get(`/promotions/${id}`);
+              currentPromo = { ...response.data, id: response.data.id.toString() } as Promo;
+            } catch (e) {
+              console.error(e);
             }
           }
         }
@@ -47,23 +46,21 @@ export default function PromosiDetail() {
         setPromo(currentPromo);
 
         // 2. Fetch other promos
-        const promosRef = collection(db, "promosi");
-        const q = query(promosRef, limit(4)); // fetch 4 in case one of them is the current
-        const querySnapshot = await getDocs(q);
-        
-        let others: Promo[] = [];
-        if (!querySnapshot.empty) {
-          querySnapshot.forEach(docSnap => {
-            if (docSnap.id !== id) {
-              others.push({ id: docSnap.id, ...docSnap.data() } as Promo);
-            }
-          });
-        } else {
-          // fallback to defaults
-          others = defaultPromos.filter((_, i) => i.toString() !== id);
+        try {
+          const responseAll = await api.get('/promotions');
+          let others: Promo[] = [];
+          if (responseAll.data && responseAll.data.length > 0) {
+            others = responseAll.data
+              .map((p: any) => ({ ...p, id: p.id.toString() }))
+              .filter((p: any) => p.id !== id);
+          } else {
+            others = defaultPromos.filter((_, i) => i.toString() !== id);
+          }
+          setOtherPromos(others.slice(0, 3));
+        } catch (e) {
+          const others = defaultPromos.filter((_, i) => i.toString() !== id);
+          setOtherPromos(others.slice(0, 3));
         }
-        
-        setOtherPromos(others.slice(0, 3)); // Keep exactly 3
         
       } catch (err) {
         console.error("Gagal memuat detail promosi:", err);

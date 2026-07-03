@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
+import api from "../../../lib/api";
 import { Link } from "react-router";
 import {
   ChevronRight,
@@ -599,28 +598,11 @@ export default function Dokter() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDoctors = async () => {
       try {
-        const snap = await getDocs(collection(db, "dokter"));
-        if (!snap.empty) {
-          const items: Doctor[] = [];
-          snap.forEach((d) => {
-            const data = d.data();
-            items.push({
-              id: d.id as any,
-              name: data.name,
-              title: data.title,
-              specialty: data.specialty,
-              polyclinic: data.polyclinic,
-              image: data.image,
-              schedule: data.schedule || [],
-              education: data.education || [],
-              experience: data.experience,
-              bio: data.bio,
-              languages: data.languages || [],
-            });
-          });
-          setDoctorsData(items);
+        const response = await api.get('/doctors');
+        if (response.data && response.data.length > 0) {
+          setDoctorsData(response.data);
         } else {
           setDoctorsData(defaultDoctors);
         }
@@ -631,7 +613,7 @@ export default function Dokter() {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchDoctors();
   }, []);
 
   const specialties = useMemo(() => ["Semua", ...Array.from(new Set(doctorsData.map((d) => d.specialty)))], [doctorsData]);

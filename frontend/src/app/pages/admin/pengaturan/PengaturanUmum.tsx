@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 
 export default function PengaturanUmum() {
   const [formData, setFormData] = useState({
@@ -17,11 +16,9 @@ export default function PengaturanUmum() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const docRef = doc(db, "settings", "general");
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          setFormData(docSnap.data() as any);
+        const response = await api.get('/settings/general');
+        if (response.data && Object.keys(response.data).length > 0) {
+          setFormData(response.data);
         }
       } catch (error) {
         console.error("Gagal mengambil pengaturan:", error);
@@ -45,7 +42,7 @@ export default function PengaturanUmum() {
     setMessage({ type: "", text: "" });
 
     try {
-      await setDoc(doc(db, "settings", "general"), formData);
+      await api.post('/settings/general', formData);
       setMessage({ type: "success", text: "Pengaturan berhasil disimpan!" });
     } catch (error) {
       console.error(error);

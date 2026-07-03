@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { db, firebaseConfig } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { useAuth } from "../../../../context/AuthContext";
 import { Trash2, Plus } from "lucide-react";
 import { Navigate } from "react-router";
@@ -37,12 +34,8 @@ export default function ManajemenUser() {
 
   const fetchUsers = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, "users"));
-      const usersData: UserData[] = [];
-      querySnapshot.forEach((doc) => {
-        usersData.push({ id: doc.id, ...doc.data() } as UserData);
-      });
-      setUsers(usersData);
+      const response = await api.get('/users');
+      setUsers(response.data);
     } catch (err) {
       console.error("Gagal mengambil data user:", err);
     } finally {
@@ -64,25 +57,7 @@ export default function ManajemenUser() {
     setError("");
 
     try {
-      // 1. Buat Secondary App agar tidak melogout sesi Admin saat ini
-      const appName = "SecondaryApp_" + Date.now();
-      const secondaryApp = initializeApp(firebaseConfig, appName);
-      const secondaryAuth = getAuth(secondaryApp);
-      
-      // 2. Buat Auth User
-      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formData.email, formData.password);
-      const newUid = userCredential.user.uid;
-      
-      // 3. Logout dan hapus Secondary App (cleanup)
-      await signOut(secondaryAuth);
-      // Note: we can't easily deleteApp without importing it, but using a unique name prevents the duplicate app error.
-      
-      // 4. Simpan ke Firestore db utama
-      await setDoc(doc(db, "users", newUid), {
-        name: formData.name,
-        email: formData.email,
-        role: formData.role
-      });
+      await api.post('/users', formData);
 
       // Sukses
       setIsModalOpen(false);
@@ -97,9 +72,9 @@ export default function ManajemenUser() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Yakin ingin menghapus akses user ini? (Catatan: Ini hanya menghapus hak akses (Role) di Firestore. Akun Auth tetap ada namun tidak bisa login ke panel admin).")) {
+    if (window.confirm("Yakin ingin menghapus akses user ini?")) {
       try {
-        await deleteDoc(doc(db, "users", id));
+        await api.delete(`/users/${id}`);
         fetchUsers();
       } catch (err) {
         console.error("Gagal menghapus user:", err);

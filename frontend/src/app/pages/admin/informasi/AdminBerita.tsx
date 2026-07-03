@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import { logActivity } from "../../../../lib/activity";
 import { Plus, Trash2, Pencil, X, Upload } from "lucide-react";
 import { articles as defaultArticles, type Article, type ArticleCategory } from "../../public/informasi/articlesData";
@@ -29,9 +28,22 @@ export default function AdminBerita() {
 
   const fetchData = async () => {
     try {
-      const snap = await getDocs(collection(db, "informasi_berita"));
-      const items: Article[] = [];
-      snap.forEach(doc => items.push({ ...doc.data() } as Article));
+      const response = await api.get('/information?type=news');
+      const items: Article[] = response.data.map((d: any) => ({
+        _dbId: d.id,
+        id: parseInt(d.slug) || d.id,
+        slug: d.slug,
+        title: d.title,
+        category: d.category,
+        date: d.date,
+        readTime: d.read_time,
+        image: d.image,
+        excerpt: d.excerpt,
+        author: d.author,
+        authorRole: d.author_role,
+        content: d.content || [],
+        tags: d.tags_or_requirements || []
+      }));
       items.sort((a, b) => b.id - a.id); // Descending ID
       setData(items);
     } catch (err) {
@@ -91,7 +103,26 @@ export default function AdminBerita() {
       if (!payload.content) payload.content = [];
       if (!payload.tags) payload.tags = [];
 
-      await setDoc(doc(db, "informasi_berita", payload.id.toString()), payload);
+      const apiPayload = {
+        type: 'news',
+        slug: payload.id.toString(),
+        title: payload.title,
+        category: payload.category,
+        date: payload.date,
+        read_time: payload.readTime,
+        image: payload.image,
+        excerpt: payload.excerpt,
+        author: payload.author,
+        author_role: payload.authorRole,
+        content: payload.content,
+        tags_or_requirements: payload.tags
+      };
+
+      if ((payload as any)._dbId) {
+        await api.put(`/information/${(payload as any)._dbId}`, apiPayload);
+      } else {
+        await api.post('/information', apiPayload);
+      }
       
       const isNew = !data.some(d => d.id === payload.id);
       await logActivity(isNew ? 'CREATE' : 'UPDATE', 'Berita', `Artikel: ${payload.title}`);
@@ -111,7 +142,9 @@ export default function AdminBerita() {
     if (confirm("Yakin ingin menghapus berita ini?")) {
       try {
         const docItem = data.find(d => d.id === id);
-        await deleteDoc(doc(db, "informasi_berita", id.toString()));
+        if ((docItem as any)?._dbId) {
+          await api.delete(`/information/${(docItem as any)._dbId}`);
+        }
         await logActivity('DELETE', 'Berita', `Artikel: ${docItem?.title || 'ID ' + id}`);
         setMessage({ type: "success", text: "Berita berhasil dihapus!" });
         fetchData();
@@ -127,7 +160,21 @@ export default function AdminBerita() {
     setSaving(true);
     try {
       for (const item of defaultArticles) {
-        await setDoc(doc(db, "informasi_berita", item.id.toString()), item);
+        const apiPayload = {
+          type: 'news',
+          slug: item.id.toString(),
+          title: item.title,
+          category: item.category,
+          date: item.date,
+          read_time: item.readTime,
+          image: item.image,
+          excerpt: item.excerpt,
+          author: item.author,
+          author_role: item.authorRole,
+          content: item.content,
+          tags_or_requirements: item.tags
+        };
+        await api.post('/information', apiPayload);
       }
       await logActivity('SYSTEM', 'Berita', 'Import data default berita');
       setMessage({ type: "success", text: "Data default berhasil dimuat!" });

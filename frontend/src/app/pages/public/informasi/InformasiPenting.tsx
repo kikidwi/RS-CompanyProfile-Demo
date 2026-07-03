@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../../lib/firebase";
+import api from "../../../../lib/api";
 import {
   Clock,
   Phone,
@@ -193,11 +192,11 @@ export default function InformasiPenting() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const snap = await getDocs(collection(db, "informasi_penting"));
-        if (!snap.empty) {
+        const response = await api.get('/information?type=info-penting');
+        if (response.data && response.data.length > 0) {
           const items: InfoSection[] = [];
-          snap.forEach(doc => {
-            const data = doc.data() as InfoSection;
+          response.data.forEach((d: any) => {
+            const data = { id: d.content.id || d.id.toString(), ...d.content } as InfoSection;
             const def = defaultSections.find(s => s.id === data.id);
             items.push({
               ...data,
