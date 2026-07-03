@@ -1,7 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
-import { auth } from "../../lib/firebase";
-import { signOut } from "firebase/auth";
+import api from "../../lib/api";
 import { 
   LayoutDashboard, 
   Users, 
@@ -16,17 +15,21 @@ import {
 import { useState } from "react";
 
 export default function AdminLayout() {
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await api.post('/logout');
+      logout();
       navigate("/admin/login");
     } catch (error) {
       console.error("Gagal logout:", error);
+      // Fallback local logout
+      logout();
+      navigate("/admin/login");
     }
   };
 

@@ -134,6 +134,7 @@ const quickFacts = [
 function InfoAccordion({ section }: { section: InfoSection }) {
   const [open, setOpen] = useState(false);
   const color = section.color;
+  const IconComp = section.icon as React.ElementType;
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
@@ -145,7 +146,7 @@ function InfoAccordion({ section }: { section: InfoSection }) {
           className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
           style={{ backgroundColor: `${color}15` }}
         >
-          <section.icon size={20} style={{ color }} />
+          {IconComp && <IconComp size={20} style={{ color }} />}
         </div>
         <span className="flex-1 text-left text-base font-bold text-gray-800">{section.title}</span>
         <ChevronDown

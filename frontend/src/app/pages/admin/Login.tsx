@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../../lib/firebase";
 import { Stethoscope, Lock, Mail } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../../lib/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -12,6 +12,7 @@ export default function Login() {
   
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
 
   const from = location.state?.from?.pathname || "/admin";
 
@@ -21,7 +22,8 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const response = await api.post('/login', { email, password });
+      login(response.data.token, response.data.user);
       navigate(from, { replace: true });
     } catch (err: any) {
       console.error(err);

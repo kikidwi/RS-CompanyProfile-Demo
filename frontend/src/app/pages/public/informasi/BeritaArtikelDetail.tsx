@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams, Navigate, useNavigate } from "react-router";
+import { Link, useParams } from "react-router";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "../../../../lib/firebase";
 import { Calendar, Clock, Tag, ChevronRight, ArrowLeft, Share2, User, Check } from "lucide-react";
@@ -9,7 +9,6 @@ export default function BeritaArtikelDetail() {
   const { slug } = useParams<{ slug: string }>();
   const [copyDone, setCopyDone] = useState(false);
 
-  const navigate = useNavigate();
   const [article, setArticle] = useState<Article | null>(null);
   const [related, setRelated] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -298,10 +297,10 @@ export default function BeritaArtikelDetail() {
               Semua Artikel
             </h3>
             <div className="space-y-2">
-              {articles
-                .filter((a) => a.slug !== slug)
+              {defaultArticles
+                .filter((a: Article) => a.slug !== slug)
                 .slice(0, 5)
-                .map((a) => {
+                .map((a: Article) => {
                   const aCfg = categoryConfig[a.category];
                   return (
                     <Link

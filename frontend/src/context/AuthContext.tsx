@@ -1,18 +1,26 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import api from '../lib/api';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
 
 interface AuthContextType {
   currentUser: User | null;
   userRole: string | null;
   loading: boolean;
+  login: (token: string, user: User) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   userRole: null,
   loading: true,
+  login: () => {},
+  logout: () => {},
 });
 
 export function useAuth() {
@@ -25,33 +33,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
+    const fetchUser = async () => {
+      const token = localStorage.getItem('adminToken');
+      if (token) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            setUserRole(userDoc.data().role || null);
-          } else {
-            setUserRole(null);
-          }
+          const response = await api.get('/user');
+          setCurrentUser(response.data);
+          setUserRole('admin'); // Atur role default jika diperlukan
         } catch (error) {
-          console.error("Error fetching user role:", error);
+          console.error("Error fetching user:", error);
+          localStorage.removeItem('adminToken');
+          setCurrentUser(null);
           setUserRole(null);
         }
-      } else {
-        setUserRole(null);
       }
       setLoading(false);
-    });
+    };
 
-    return unsubscribe;
+    fetchUser();
   }, []);
+
+  const login = (token: string, user: User) => {
+    localStorage.setItem('adminToken', token);
+    setCurrentUser(user);
+    setUserRole('admin');
+  };
+
+  const logout = () => {
+    localStorage.removeItem('adminToken');
+    setCurrentUser(null);
+    setUserRole(null);
+  };
 
   const value = {
     currentUser,
     userRole,
     loading,
+    login,
+    logout,
   };
 
   return (

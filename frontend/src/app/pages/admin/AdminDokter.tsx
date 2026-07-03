@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
+import api from "../../../lib/api";
 import { logActivity } from "../../../lib/activity";
 import { Plus, Trash2, Pencil, X, Upload } from "lucide-react";
 import { defaultDoctors } from "../public/Dokter";
@@ -46,10 +45,8 @@ export default function AdminDokter() {
 
   const fetchData = async () => {
     try {
-      const snap = await getDocs(collection(db, "dokter"));
-      const items: DoctorData[] = [];
-      snap.forEach((d) => items.push({ id: d.id, ...d.data() } as DoctorData));
-      items.sort((a, b) => (a.order || 0) - (b.order || 0));
+      const response = await api.get('/doctors');
+      const items: DoctorData[] = response.data;
       setData(items);
     } catch (err) {
       console.error(err);
@@ -90,12 +87,12 @@ export default function AdminDokter() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const docId = editingId || crypto.randomUUID();
       const payload = { ...formData };
-      if (!editingId) {
-        payload.id = docId;
+      if (editingId) {
+        await api.put(`/doctors/${editingId}`, payload);
+      } else {
+        await api.post('/doctors', payload);
       }
-      await setDoc(doc(db, "dokter", docId), payload);
       await logActivity(editingId ? 'UPDATE' : 'CREATE', 'Dokter', `Dokter ${payload.name}`);
       setIsModalOpen(false);
       setMessage({ type: "success", text: editingId ? "Data berhasil diperbarui!" : "Data berhasil ditambahkan!" });
@@ -112,7 +109,7 @@ export default function AdminDokter() {
     if (!window.confirm("Yakin ingin menghapus data dokter ini?")) return;
     try {
       const docItem = data.find(d => d.id === id);
-      await deleteDoc(doc(db, "dokter", id));
+      await api.delete(`/doctors/${id}`);
       await logActivity('DELETE', 'Dokter', `Dokter ${docItem?.name || 'ID ' + id}`);
       fetchData();
     } catch (err) {
@@ -150,11 +147,8 @@ export default function AdminDokter() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      // Create an array of promises for setting documents
       const promises = defaultDoctors.map((docItem, index) => {
-        const docId = crypto.randomUUID();
         const payload = {
-          id: docId,
           name: docItem.name,
           title: docItem.title,
           specialty: docItem.specialty,
@@ -167,10 +161,10 @@ export default function AdminDokter() {
           languages: docItem.languages,
           order: index
         };
-        return setDoc(doc(db, "dokter", docId), payload);
+        return api.post('/doctors', payload);
       });
       await Promise.all(promises);
-      await logActivity('IMPORT', 'Dokter', 'Import data default dokter');
+      await logActivity('SYSTEM', 'Dokter', 'Import data default dokter');
       setMessage({ type: "success", text: "Data default berhasil dimuat!" });
       fetchData();
     } catch (err) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { ChevronLeft, ChevronRight, Calendar, Heart, BedDouble, Stethoscope, Megaphone } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Heart, BedDouble, Megaphone } from "lucide-react";
 
 const slides = [
   {

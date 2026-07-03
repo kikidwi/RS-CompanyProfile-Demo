@@ -51,7 +51,7 @@ export default function AdminMaklumat() {
     try {
       const promises = defaultMaklumatItems.map((item, i) => {
         const docId = crypto.randomUUID();
-        const iconString = typeof item.icon === 'string' ? item.icon : (item.icon.render?.name || item.icon.name || "AlertCircle");
+        const iconString = typeof item.icon === 'string' ? item.icon : ((item.icon as any).render?.name || (item.icon as any).name || "AlertCircle");
         const payload: any = {
           ...item,
           icon: iconString,

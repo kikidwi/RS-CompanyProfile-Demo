@@ -277,6 +277,7 @@ export default function AlurPendaftaran() {
   }
 
   const flow = flowsData.find((f) => f.id === active) || flowsData[0];
+  const FlowIcon = flow.icon as React.ElementType;
 
   return (
     <div className="w-full" style={{ fontFamily: "'Karla', sans-serif" }}>
@@ -288,21 +289,24 @@ export default function AlurPendaftaran() {
 
       {/* Type Selector */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
-        {flowsData.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setActive(f.id)}
-            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
-              active === f.id
-                ? "border-transparent text-white shadow-lg scale-105"
-                : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:shadow"
-            }`}
-            style={active === f.id ? { backgroundColor: f.color } : {}}
-          >
-            <f.icon size={24} style={active === f.id ? { color: "#fff" } : { color: f.color }} />
-            <span className="text-sm font-bold">{f.label}</span>
-          </button>
-        ))}
+        {flowsData.map((f) => {
+          const IconComp = f.icon as React.ElementType;
+          return (
+            <button
+              key={f.id}
+              onClick={() => setActive(f.id)}
+              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                active === f.id
+                  ? "border-transparent text-white shadow-lg scale-105"
+                  : "bg-white border-gray-100 text-gray-600 hover:border-gray-200 hover:shadow"
+              }`}
+              style={active === f.id ? { backgroundColor: f.color } : {}}
+            >
+              {IconComp && <IconComp size={24} style={active === f.id ? { color: "#fff" } : { color: f.color }} />}
+              <span className="text-sm font-bold">{f.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Flow Detail */}
@@ -316,7 +320,7 @@ export default function AlurPendaftaran() {
             className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: flow.color }}
           >
-            <flow.icon size={22} className="text-white" />
+            {FlowIcon && <FlowIcon size={22} className="text-white" />}
           </div>
           <div>
             <h3 className="text-lg font-bold text-gray-900">{flow.label}</h3>
