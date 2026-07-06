@@ -22,14 +22,14 @@ export default function AdminDireksi() {
 
   const fetchData = async () => {
     try {
-      const response = await api.get('/profiles?type=direksi');
+      const response = await api.get('/board-directors');
       const items: DireksiData[] = response.data.map((d: any) => ({
         id: d.id.toString(),
         name: d.name,
         role: d.role,
-        desc: d.content?.desc || "",
+        desc: d.description || "",
         photo: d.image || "",
-        order: d.order || 0
+        order: d.sort_order || 0
       }));
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
@@ -60,18 +60,17 @@ export default function AdminDireksi() {
     setMessage({ type: "", text: "" });
     try {
       const payload = {
-        type: 'direksi',
         name: formData.name,
         role: formData.role,
         image: formData.photo,
-        order: formData.order,
-        content: { desc: formData.desc }
+        sort_order: formData.order,
+        description: formData.desc
       };
       
       if (editingId) {
-        await api.put(`/profiles/${editingId}`, payload);
+        await api.put(`/board-directors/${editingId}`, payload);
       } else {
-        await api.post('/profiles', payload);
+        await api.post('/board-directors', payload);
       }
       setIsModalOpen(false);
       setMessage({ type: "success", text: editingId ? "Data berhasil diperbarui!" : "Data berhasil ditambahkan!" });
@@ -87,7 +86,7 @@ export default function AdminDireksi() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus data ini?")) return;
     try {
-      await api.delete(`/profiles/${id}`);
+      await api.delete(`/board-directors/${id}`);
       fetchData();
     } catch (err) {
       console.error(err);

@@ -21,7 +21,14 @@ export default function AdminPromosi() {
   const fetchData = async () => {
     try {
       const response = await api.get('/promotions');
-      const items: Promo[] = response.data;
+      const items: Promo[] = response.data.map((d: any) => ({
+        id: d.id.toString(),
+        title: d.title,
+        category: d.category,
+        image: d.image,
+        desc: d.description || "",
+        order: d.sort_order || 0
+      }));
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
     } catch (err) {
@@ -56,14 +63,18 @@ export default function AdminPromosi() {
     setMessage({ type: "", text: "" });
 
     try {
-      const id = formData.id || Date.now().toString();
-      const payload = { ...formData, id };
+      const payload = { 
+        title: formData.title,
+        category: formData.category,
+        image: formData.image,
+        description: formData.desc,
+        sort_order: formData.order || 0
+      };
 
       if (formData.id) {
         await api.put(`/promotions/${formData.id}`, payload);
       } else {
-        const createRes = await api.post('/promotions', payload);
-        payload.id = createRes.data.id;
+        await api.post('/promotions', payload);
       }
       await logActivity(formData.id ? 'UPDATE' : 'CREATE', 'Promosi', `Promo ${payload.title}`);
       

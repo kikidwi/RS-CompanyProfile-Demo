@@ -3,24 +3,12 @@ import api from "../../../../lib/api";
 
 export default function AdminVisiMisi() {
   const defaultData = {
-    visi: "Menjadi Rumah Sakit Rujukan Nasional Terdepan yang Mengedepankan Pelayanan Medis Paripurna, Inovatif, dan Berkeadilan bagi Seluruh Lapisan Masyarakat di Tahun 2030.",
-    misi: [
-      "Memberikan pelayanan kesehatan yang aman, bermutu tinggi, dan berfokus pada keselamatan serta kepuasan pasien.",
-      "Mengembangkan profesionalisme sumber daya manusia melalui program pendidikan, pelatihan, dan penelitian kesehatan yang berkelanjutan.",
-      "Menyediakan fasilitas dan peralatan medis mutakhir yang ramah lingkungan dan memenuhi standar keamanan internasional.",
-      "Melaksanakan tata kelola rumah sakit yang baik (Good Corporate Governance) secara transparan, akuntabel, dan bertanggung jawab.",
-      "Membangun jejaring kemitraan strategis dengan institusi kesehatan, pendidikan, dan pemerintah untuk memperluas jangkauan layanan.",
-    ],
+    visi: "",
+    misi: ["", "", "", "", ""],
     nilaiBudaya: [
-      { label: "Berorientasi Pelayanan", desc: "Memahami kebutuhan masyarakat dan memberikan layanan yang ramah serta dapat diandalkan." },
-      { label: "Akuntabel", desc: "Menyelesaikan tugas dengan jujur, bertanggung jawab, dan penuh integritas." },
-      { label: "Kompeten", desc: "Terus meningkatkan kemampuan untuk menghadapi setiap tantangan." },
-      { label: "Harmonis", desc: "Menghargai setiap orang tanpa memandang latar belakang." },
-      { label: "Loyalitas", desc: "Menjaga nama baik institusi, pimpinan, dan negara." },
-      { label: "Adaptif", desc: "Cepat menyesuaikan diri dengan perubahan dan terus berinovasi." },
-      { label: "Kolaboratif", desc: "Bekerja sama dengan berbagai pihak untuk menghasilkan nilai tambah bersama." },
+      { label: "", desc: "" },
     ],
-    tagline: "Health for All — Sehat untuk Semua",
+    tagline: "",
   };
 
   const [formData, setFormData] = useState(defaultData);
@@ -32,19 +20,16 @@ export default function AdminVisiMisi() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await api.get('/profiles?type=visi-misi');
-        if (response.data && response.data.length > 0) {
-          const item = response.data[0];
-          setDbId(item.id);
-          if (item.content) {
-            const data = item.content;
-            setFormData({
-              visi: data.visi || "",
-              misi: data.misi || ["", "", "", "", ""],
-              nilaiBudaya: data.nilaiBudaya || formData.nilaiBudaya,
-              tagline: data.tagline || "",
-            });
-          }
+        const response = await api.get('/vision-missions');
+        if (response.data) {
+          const data = response.data;
+          setDbId(data.id);
+          setFormData({
+            visi: data.vision || "",
+            misi: data.mission_items?.length ? data.mission_items.map((m: any) => m.description) : defaultData.misi,
+            nilaiBudaya: data.cultural_values?.length ? data.cultural_values.map((v: any) => ({ label: v.label, desc: v.description })) : defaultData.nilaiBudaya,
+            tagline: data.tagline || "",
+          });
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -60,13 +45,16 @@ export default function AdminVisiMisi() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const payload = { type: 'visi-misi', content: formData };
-      if (dbId) {
-        await api.put(`/profiles/${dbId}`, payload);
-      } else {
-        const res = await api.post('/profiles', payload);
-        setDbId(res.data.id);
-      }
+      const payload = {
+        vision: formData.visi,
+        tagline: formData.tagline,
+        mission_items: formData.misi,
+        cultural_values: formData.nilaiBudaya.map(v => ({ label: v.label, description: v.desc }))
+      };
+      
+      const res = await api.post('/vision-missions', payload);
+      setDbId(res.data.id);
+      
       setMessage({ type: "success", text: "Data Visi & Misi berhasil disimpan!" });
     } catch (error) {
       console.error(error);

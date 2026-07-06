@@ -1,73 +1,7 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { ArrowRight, Calendar, Clock, Tag } from "lucide-react";
-
-// Promo data matches /promosi
-const promos = [
-  {
-    id: 1,
-    title: "Paket MCU Jantung Komprehensif",
-    image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600",
-    badge: "Terpopuler",
-    badgeColor: "#006370",
-    validUntil: "31 Juli 2026",
-    finalPrice: "Rp 1.750.000",
-    originalPrice: "Rp 2.500.000",
-    discount: "30%",
-    desc: "EKG, ekokardiografi, tes treadmill, laboratorium, dan konsultasi dokter spesialis jantung.",
-  },
-  {
-    id: 2,
-    title: "Diskon 25% USG Kandungan",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600",
-    badge: "Diskon",
-    badgeColor: "#b45309",
-    validUntil: "15 Agustus 2026",
-    finalPrice: "Rp 300.000",
-    originalPrice: "Rp 400.000",
-    discount: "25%",
-    desc: "USG kandungan 2D dan 3D untuk pasien umum dan peserta asuransi tertentu.",
-  },
-  {
-    id: 3,
-    title: "Paket Persalinan Normal & Cesar",
-    image: "https://images.unsplash.com/photo-1492725764893-90b379c2b6e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600",
-    badge: "Paket",
-    badgeColor: "#be185d",
-    validUntil: "31 Desember 2026",
-    finalPrice: "Rp 6.500.000",
-    originalPrice: "Rp 8.000.000",
-    discount: "19%",
-    desc: "All-in: biaya dokter, kamar rawat inap 2 malam Kelas I, laboratorium bayi, dan konsultasi laktasi.",
-  },
-];
-
-// News data matches /informasi/berita-artikel (first 3)
-const news = [
-  {
-    id: 1,
-    slug: "akreditasi-kars-paripurna",
-    title: "RS Utama Demo Raih Akreditasi Paripurna dari KARS untuk Ketiga Kalinya",
-    date: "25 Juni 2026",
-    category: "Berita",
-    image: "https://images.unsplash.com/photo-1615770922480-0b9ae80afeba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-  },
-  {
-    id: 2,
-    slug: "tanda-serangan-jantung",
-    title: "Mengenal Tanda-Tanda Serangan Jantung dan Cara Pertolongan Pertama",
-    date: "20 Juni 2026",
-    category: "Edukasi",
-    image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-  },
-  {
-    id: 3,
-    slug: "layanan-genomik-kardiovaskular",
-    title: "Peluncuran Program Layanan Genomik Kardiovaskular: Inovasi Deteksi Dini Berbasis DNA",
-    date: "10 Juni 2026",
-    category: "Berita",
-    image: "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-  },
-];
+import { ArrowRight, Calendar, Clock } from "lucide-react";
+import api from "../../lib/api";
 
 const categoryColors: Record<string, string> = {
   Berita: "#006370",
@@ -76,6 +10,62 @@ const categoryColors: Record<string, string> = {
 };
 
 export function Promo() {
+  const [promos, setPromos] = useState<any[]>([]);
+  const [news, setNews] = useState<any[]>([]);
+  const [loadingPromos, setLoadingPromos] = useState(true);
+  const [loadingNews, setLoadingNews] = useState(true);
+
+  useEffect(() => {
+    const fetchPromos = async () => {
+      try {
+        const response = await api.get('/promotions');
+        if (response.data && response.data.length > 0) {
+          const items = response.data.slice(0, 3).map((d: any) => {
+            const desc = d.terms && d.terms.length > 0 ? d.terms.map((t:any) => t.term).join('. ') : "Penawaran spesial untuk Anda.";
+            return {
+              id: d.id,
+              title: d.title,
+              image: d.image,
+              badge: "Promo",
+              badgeColor: "#006370",
+              validUntil: d.valid_until,
+              desc: desc,
+            };
+          });
+          setPromos(items);
+        }
+      } catch (err) {
+        console.error("Gagal memuat promosi:", err);
+      } finally {
+        setLoadingPromos(false);
+      }
+    };
+
+    const fetchNews = async () => {
+      try {
+        const response = await api.get('/articles');
+        if (response.data && response.data.length > 0) {
+          const items = response.data.slice(0, 3).map((d: any) => ({
+            id: d.id,
+            slug: d.slug,
+            title: d.title,
+            date: d.date,
+            category: d.category,
+            image: d.image,
+          }));
+          setNews(items);
+        }
+      } catch (err) {
+        console.error("Gagal memuat berita:", err);
+      } finally {
+        setLoadingNews(false);
+      }
+    };
+
+    fetchPromos();
+    fetchNews();
+  }, []);
+
   return (
     <>
       {/* ── Promos ── */}
@@ -95,13 +85,15 @@ export function Promo() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {promos.map((promo) => (
+            {loadingPromos ? (
+              <div className="col-span-3 text-center py-10 text-gray-400">Memuat promosi...</div>
+            ) : promos.map((promo) => (
               <Link
                 key={promo.id}
-                to="/promosi"
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1"
+                to={`/promosi/${promo.id}`}
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 flex flex-col"
               >
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-48 overflow-hidden shrink-0">
                   <img
                     src={promo.image}
                     alt={promo.title}
@@ -113,25 +105,16 @@ export function Promo() {
                   >
                     {promo.badge}
                   </span>
-                  {promo.discount && (
-                    <div className="absolute top-3 right-3 w-11 h-11 rounded-full bg-red-500 text-white flex flex-col items-center justify-center text-[9px] font-extrabold shadow">
-                      <span>OFF</span>
-                      <span>{promo.discount}</span>
-                    </div>
-                  )}
                 </div>
-                <div className="p-4">
+                <div className="p-4 flex flex-col flex-1">
                   <div className="flex items-center gap-1 text-gray-400 text-xs mb-2">
                     <Calendar size={11} />
-                    <span>Berlaku hingga {promo.validUntil}</span>
+                    <span>Berlaku hingga {new Date(promo.validUntil).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                   </div>
                   <h3 className="text-gray-900 font-bold text-sm mb-1 group-hover:text-[#006370] transition-colors">{promo.title}</h3>
-                  <p className="text-gray-500 text-xs leading-relaxed mb-3">{promo.desc}</p>
-                  <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-lg font-extrabold text-[#006370]">{promo.finalPrice}</span>
-                    <span className="text-xs text-gray-400 line-through">{promo.originalPrice}</span>
-                  </div>
-                  <div className="w-full text-center bg-[#3b9ca5] group-hover:bg-[#006370] text-white text-sm font-bold py-2 rounded-xl transition-colors">
+                  <p className="text-gray-500 text-xs leading-relaxed mb-4 line-clamp-3">{promo.desc}</p>
+                  
+                  <div className="w-full text-center bg-[#3b9ca5] group-hover:bg-[#006370] text-white text-sm font-bold py-2 rounded-xl transition-colors mt-auto">
                     Selengkapnya
                   </div>
                 </div>
@@ -158,8 +141,10 @@ export function Promo() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {news.map((item) => {
-              const color = categoryColors[item.category] ?? "#006370";
+            {loadingNews ? (
+              <div className="col-span-3 text-center py-10 text-gray-400">Memuat berita...</div>
+            ) : news.map((item) => {
+              const color = categoryColors[item.category] || "#64748b";
               return (
                 <Link
                   key={item.id}

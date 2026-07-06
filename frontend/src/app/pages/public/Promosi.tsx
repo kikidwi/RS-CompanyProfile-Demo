@@ -148,7 +148,22 @@ export default function Promosi() {
       try {
         const response = await api.get('/promotions');
         if (response.data && response.data.length > 0) {
-          const items = response.data.map((d: any) => ({ ...d, id: d.id.toString() }));
+          const items = response.data.map((d: any) => ({
+            id: d.id.toString(),
+            title: d.title,
+            category: d.category,
+            badge: d.badge,
+            badgeColor: d.badge_color,
+            image: d.image,
+            validUntil: d.valid_until,
+            discount: d.discount,
+            originalPrice: d.original_price,
+            finalPrice: d.final_price,
+            desc: d.description || "",
+            isHot: d.is_hot,
+            isFeatured: d.is_featured,
+            order: d.sort_order || 0
+          }));
           items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
           setPromos(items);
         }

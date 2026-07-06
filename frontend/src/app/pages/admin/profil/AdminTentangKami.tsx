@@ -3,15 +3,15 @@ import api from "../../../../lib/api";
 
 export default function AdminTentangKami() {
   const defaultData = {
-    paragraf1: "Rumah Sakit Utama Demo merupakan rumah sakit umum bertipe A yang berfokus pada penyelenggaraan pelayanan kesehatan terpadu dengan standar internasional. Didirikan pada tahun 2005, kami berawal dari sebuah klinik kesehatan masyarakat kecil yang perlahan berkembang menjadi salah satu pusat rujukan unggulan di kawasan ini.",
-    paragraf2: "Perjalanan panjang kami ditandai oleh semangat yang tidak pernah padam: memberikan perawatan medis terbaik dengan sentuhan kemanusiaan yang hangat. Kami percaya bahwa teknologi medis mutakhir dan dokter spesialis berpengalaman, apabila dipadukan dengan rasa empati yang tulus, akan menghasilkan pengalaman penyembuhan yang sesungguhnya bagi setiap pasien.",
-    paragraf3: "Saat ini, Rumah Sakit Utama Demo melayani lebih dari 10.000 pasien rawat jalan dan 2.000 pasien rawat inap setiap bulannya, dengan dukungan lebih dari 500 tenaga medis dan non-medis yang terlatih dan berdedikasi tinggi.",
+    paragraf1: "",
+    paragraf2: "",
+    paragraf3: "",
     keunggulan: [
-      { title: "Empati", desc: "Kami melayani setiap pasien dengan kepedulian tulus, selayaknya merawat anggota keluarga sendiri. Pendekatan yang berpusat pada pasien (patient-centered care) menjadi fondasi dari setiap tindakan kami." },
-      { title: "Profesionalisme", desc: "Seluruh tenaga medis kami menjunjung tinggi etika profesi dan terus memperbarui keilmuan melalui pelatihan dan sertifikasi internasional secara berkala." },
-      { title: "Integritas", desc: "Kami berkomitmen untuk selalu transparan, jujur, dan mengutamakan keselamatan serta hak-hak setiap pasien di atas kepentingan lainnya." },
+      { title: "", desc: "" },
+      { title: "", desc: "" },
+      { title: "", desc: "" },
     ],
-    akreditasi: "Komitmen kami terhadap mutu layanan telah diakui secara formal melalui berbagai proses akreditasi nasional dan internasional yang ketat. Rumah Sakit Utama Demo saat ini telah memperoleh status KARS Paripurna, KARS Internasional, serta akreditasi bergengsi dari Joint Commission International (JCI) — tiga standar tertinggi dalam dunia pelayanan kesehatan.",
+    akreditasi: "",
   };
 
   const [formData, setFormData] = useState(defaultData);
@@ -23,24 +23,17 @@ export default function AdminTentangKami() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await api.get('/profiles?type=tentang-kami');
-        if (response.data && response.data.length > 0) {
-          const item = response.data[0];
-          setDbId(item.id);
-          if (item.content) {
-            const data = item.content;
-            setFormData({
-              paragraf1: data.paragraf1 || "",
-              paragraf2: data.paragraf2 || "",
-              paragraf3: data.paragraf3 || "",
-              keunggulan: data.keunggulan || [
-                { title: "", desc: "" },
-                { title: "", desc: "" },
-                { title: "", desc: "" },
-              ],
-              akreditasi: data.akreditasi || "",
-            });
-          }
+        const response = await api.get('/about-us');
+        if (response.data) {
+          const data = response.data;
+          setDbId(data.id);
+          setFormData({
+            paragraf1: data.paragraph_1 || "",
+            paragraf2: data.paragraph_2 || "",
+            paragraf3: data.paragraph_3 || "",
+            keunggulan: data.strengths?.length ? data.strengths.map((s: any) => ({ title: s.title, desc: s.description })) : defaultData.keunggulan,
+            akreditasi: data.accreditation || "",
+          });
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -56,13 +49,17 @@ export default function AdminTentangKami() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const payload = { type: 'tentang-kami', content: formData };
-      if (dbId) {
-        await api.put(`/profiles/${dbId}`, payload);
-      } else {
-        const res = await api.post('/profiles', payload);
-        setDbId(res.data.id);
-      }
+      const payload = {
+        paragraph_1: formData.paragraf1,
+        paragraph_2: formData.paragraf2,
+        paragraph_3: formData.paragraf3,
+        accreditation: formData.akreditasi,
+        strengths: formData.keunggulan.map(k => ({ title: k.title, description: k.desc }))
+      };
+      
+      const res = await api.post('/about-us', payload);
+      setDbId(res.data.id);
+      
       setMessage({ type: "success", text: "Data Tentang Kami berhasil disimpan!" });
     } catch (error) {
       console.error(error);

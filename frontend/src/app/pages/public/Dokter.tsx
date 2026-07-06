@@ -602,7 +602,20 @@ export default function Dokter() {
       try {
         const response = await api.get('/doctors');
         if (response.data && response.data.length > 0) {
-          setDoctorsData(response.data);
+          const items = response.data.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            title: d.title,
+            specialty: d.specialty,
+            polyclinic: d.polyclinic,
+            image: d.image,
+            schedule: d.schedules ? d.schedules.map((s: any) => ({ day: s.day, time: `${s.start_time.substring(0, 5)} - ${s.end_time.substring(0, 5)}` })) : [],
+            education: d.educations ? d.educations.map((e: any) => `${e.degree} - ${e.institution}${e.year ? ` (${e.year})` : ''}`) : [],
+            experience: d.experience || "",
+            bio: d.bio || "",
+            languages: d.languages || [],
+          }));
+          setDoctorsData(items);
         } else {
           setDoctorsData(defaultDoctors);
         }
@@ -630,7 +643,7 @@ export default function Dokter() {
         !activeDay || d.schedule.some((s) => s.day === activeDay);
       return matchSearch && matchSpecialty && matchDay;
     });
-  }, [search, activeSpecialty, activeDay]);
+  }, [doctorsData, search, activeSpecialty, activeDay]);
 
   return (
     <div

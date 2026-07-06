@@ -1,56 +1,48 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { ArrowRight, Award, Calendar } from "lucide-react";
-
-const doctors = [
-  {
-    id: 1,
-    name: "dr. Ahmad Fauzi",
-    title: "Sp.JP (K)",
-    specialty: "Kardiologi",
-    polyclinic: "Poli Jantung",
-    image: "https://randomuser.me/api/portraits/men/32.jpg",
-    schedule: "Senin, Rabu, Jumat",
-    experience: "18 tahun",
-  },
-  {
-    id: 2,
-    name: "dr. Siti Rahayu",
-    title: "Sp.JP (K)",
-    specialty: "Kardiologi",
-    polyclinic: "Poli Jantung",
-    image: "https://randomuser.me/api/portraits/women/44.jpg",
-    schedule: "Selasa, Kamis",
-    experience: "14 tahun",
-  },
-  {
-    id: 3,
-    name: "dr. Bambang Suryanto",
-    title: "SpBTKV",
-    specialty: "Bedah Toraks",
-    polyclinic: "Poli Bedah Kardiovaskular",
-    image: "https://randomuser.me/api/portraits/men/52.jpg",
-    schedule: "Senin, Selasa, Rabu",
-    experience: "22 tahun",
-  },
-  {
-    id: 4,
-    name: "dr. Dewi Anggraini",
-    title: "Sp.A",
-    specialty: "Anak",
-    polyclinic: "Poli Anak",
-    image: "https://randomuser.me/api/portraits/women/55.jpg",
-    schedule: "Senin, Rabu, Jumat",
-    experience: "11 tahun",
-  },
-];
+import { ArrowRight, Calendar } from "lucide-react";
+import api from "../../lib/api";
 
 const specialtyColors: Record<string, string> = {
   Kardiologi: "#006370",
   "Bedah Toraks": "#b45309",
+  "Penyakit Dalam": "#6d28d9",
+  "Kebidanan & Kandungan": "#be185d",
+  "Bedah Umum": "#0369a1",
   Anak: "#0d9488",
+  Saraf: "#7c3aed",
 };
 
 export function Doctors() {
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await api.get('/doctors');
+        if (response.data && response.data.length > 0) {
+          const items = response.data.slice(0, 4).map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            title: d.title,
+            specialty: d.specialty,
+            polyclinic: d.polyclinic,
+            image: d.image,
+            schedule: d.schedules ? d.schedules.map((s: any) => s.day).join(', ') : "Senin - Jumat",
+            experience: d.experience || "10+ tahun",
+          }));
+          setDoctors(items);
+        }
+      } catch (err) {
+        console.error("Gagal memuat dokter:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
   return (
     <section id="dokter" className="py-16 bg-[rgba(59,156,165,0.06)]" style={{ fontFamily: "'Karla', sans-serif" }}>
       <div className="max-w-screen-xl mx-auto px-4 md:px-8">
@@ -70,14 +62,16 @@ export function Doctors() {
 
         {/* Doctor Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {doctors.map((doc) => {
+          {loading ? (
+            <div className="col-span-4 text-center py-10 text-gray-400">Memuat dokter...</div>
+          ) : doctors.map((doc) => {
             const color = specialtyColors[doc.specialty] ?? "#006370";
             return (
               <div
                 key={doc.id}
                 className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 group flex flex-col"
               >
-                <div className="relative h-56 overflow-hidden">
+                <div className="relative h-56 overflow-hidden shrink-0">
                   <img
                     src={doc.image}
                     alt={doc.name}
@@ -95,21 +89,17 @@ export function Doctors() {
                   <h3 className="text-gray-900 font-bold text-[15px] leading-snug">
                     {doc.name}, <span style={{ color }}>{doc.title}</span>
                   </h3>
-                  <p className="text-gray-400 text-xs mt-0.5 mb-2">{doc.polyclinic}</p>
+                  <p className="text-gray-400 text-xs mt-0.5 mb-3">{doc.polyclinic}</p>
                   <div className="flex items-center gap-1 text-gray-400 text-xs mb-1">
                     <Calendar size={11} className="shrink-0" />
-                    {doc.schedule}
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-400 text-xs mb-4">
-                    <Award size={11} className="shrink-0" />
-                    Pengalaman {doc.experience}
+                    <span className="truncate">{doc.schedule}</span>
                   </div>
                   <Link
                     to="/dokter"
-                    className="mt-auto w-full block text-center text-white text-sm font-bold py-2.5 rounded-xl transition-colors hover:opacity-90"
-                    style={{ backgroundColor: color }}
+                    className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between text-xs font-bold transition-colors group-hover:gap-2"
+                    style={{ color }}
                   >
-                    Lihat Jadwal
+                    Lihat Profil <ArrowRight size={12} />
                   </Link>
                 </div>
               </div>
@@ -117,12 +107,12 @@ export function Doctors() {
           })}
         </div>
 
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-8 md:hidden">
           <Link
             to="/dokter"
-            className="flex items-center gap-2 text-[#3b9ca5] font-semibold text-sm border border-[#3b9ca5] rounded-xl px-6 py-2.5 hover:bg-[#3b9ca5] hover:text-white transition-colors"
+            className="flex items-center gap-2 text-[#3b9ca5] font-semibold text-sm border border-[#3b9ca5] rounded-xl px-5 py-2 hover:bg-[#3b9ca5] hover:text-white transition-colors"
           >
-            Lihat Direktori Dokter Lengkap <ArrowRight size={16} />
+            Lihat semua dokter <ArrowRight size={16} />
           </Link>
         </div>
       </div>

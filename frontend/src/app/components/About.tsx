@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { CheckCircle } from "lucide-react";
+import api from "../../lib/api";
 
 const stats = [
   { value: "16+", label: "Dokter Spesialis" },
@@ -18,6 +20,22 @@ const highlights = [
 ];
 
 export function About() {
+  const [about, setAbout] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchAbout = async () => {
+      try {
+        const response = await api.get('/about-us');
+        if (response.data) {
+          setAbout(response.data);
+        }
+      } catch (err) {
+        console.error("Gagal memuat tentang kami:", err);
+      }
+    };
+    fetchAbout();
+  }, []);
+
   return (
     <section id="profil" className="py-16 bg-white" style={{ fontFamily: "'Karla', sans-serif" }}>
       <div className="max-w-screen-xl mx-auto px-4 md:px-8">
@@ -38,12 +56,21 @@ export function About() {
             <h2 className="text-[#006370] text-2xl md:text-3xl font-bold mb-4 leading-tight">
               Rumah Sakit Utama Demo
             </h2>
-            <p className="text-gray-500 text-base leading-relaxed mb-4">
-              RS Utama Demo merupakan rumah sakit umum bertipe A yang berfokus pada penyelenggaraan pelayanan kesehatan terpadu dengan standar internasional. Didirikan pada tahun 2005, kami berawal dari sebuah klinik kecil yang berkembang menjadi pusat rujukan unggulan di kawasan ini.
-            </p>
-            <p className="text-gray-500 text-base leading-relaxed mb-6">
-              Kami percaya bahwa teknologi medis mutakhir dan dokter spesialis berpengalaman, dipadukan dengan rasa empati yang tulus, menghasilkan pengalaman penyembuhan yang sesungguhnya bagi setiap pasien.
-            </p>
+            {about ? (
+              <>
+                {about.paragraph_1 && <p className="text-gray-500 text-base leading-relaxed mb-4">{about.paragraph_1}</p>}
+                {about.paragraph_2 && <p className="text-gray-500 text-base leading-relaxed mb-6">{about.paragraph_2}</p>}
+              </>
+            ) : (
+              <>
+                <p className="text-gray-500 text-base leading-relaxed mb-4">
+                  RS Utama Demo merupakan rumah sakit umum bertipe A yang berfokus pada penyelenggaraan pelayanan kesehatan terpadu dengan standar internasional. Didirikan pada tahun 2005, kami berawal dari sebuah klinik kecil yang berkembang menjadi pusat rujukan unggulan di kawasan ini.
+                </p>
+                <p className="text-gray-500 text-base leading-relaxed mb-6">
+                  Kami percaya bahwa teknologi medis mutakhir dan dokter spesialis berpengalaman, dipadukan dengan rasa empati yang tulus, menghasilkan pengalaman penyembuhan yang sesungguhnya bagi setiap pasien.
+                </p>
+              </>
+            )}
             <ul className="space-y-3 mb-6">
               {highlights.map((h) => (
                 <li key={h} className="flex items-start gap-2">
@@ -62,7 +89,7 @@ export function About() {
 
           <div className="relative">
             <img
-              src="https://images.unsplash.com/photo-1615770922480-0b9ae80afeba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+              src={about?.image || "https://images.unsplash.com/photo-1615770922480-0b9ae80afeba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"}
               alt="RS Utama Demo"
               className="rounded-2xl w-full h-80 object-cover shadow-lg"
             />

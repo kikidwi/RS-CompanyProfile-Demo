@@ -25,8 +25,17 @@ export default function AdminMCU() {
     setLoading(true);
     try {
       const response = await api.get('/mcu-packages');
-      const items: any[] = response.data;
-      items.sort((a, b) => (a.order || 0) - (b.order || 0));
+      const items: any[] = response.data.map((d: any) => ({
+        id: d.id,
+        name: d.name,
+        price: d.price,
+        color: d.color,
+        badge: d.badge || "",
+        description: d.description || "",
+        items: d.items ? d.items.map((i: any) => i.item) : [""],
+        sort_order: d.sort_order || 0
+      }));
+      items.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
       setData(items);
     } catch (err) {
       console.error(err);
@@ -45,10 +54,14 @@ export default function AdminMCU() {
     setMessage({ type: "", text: "" });
     try {
       const promises = defaultMcuPackages.map((pkg, i) => {
-        const docId = crypto.randomUUID();
         const payload: any = {
-          ...pkg,
-          order: i,
+          name: pkg.name,
+          price: parseInt(pkg.price.replace(/[^0-9]/g, '')) || 0,
+          color: pkg.color,
+          badge: pkg.badge || "",
+          description: pkg.description || "",
+          items: pkg.items,
+          sort_order: i,
         };
         Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
         return api.post('/mcu-packages', payload);
@@ -84,12 +97,12 @@ export default function AdminMCU() {
       setFormData({
         id: "",
         name: "",
-        price: "",
+        price: 0,
         color: "#006370",
         badge: "",
         description: "",
         items: [""],
-        order: data.length,
+        sort_order: data.length,
       });
     }
     setIsModalOpen(true);
@@ -111,10 +124,15 @@ export default function AdminMCU() {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { ...formData };
-      
-      // Filter empty items
-      payload.items = payload.items.filter((i: string) => i.trim() !== "");
+      const payload = { 
+        name: formData.name,
+        price: Number(formData.price),
+        color: formData.color,
+        badge: formData.badge,
+        description: formData.description,
+        sort_order: formData.sort_order,
+        items: formData.items.filter((i: string) => i.trim() !== "")
+      };
       
       if (formData.id) {
         await api.put(`/mcu-packages/${formData.id}`, payload);

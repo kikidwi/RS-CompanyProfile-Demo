@@ -57,9 +57,15 @@ export default function AdminKetersediaan() {
     setMessage({ type: "", text: "" });
     try {
       const promises = defaultAllRooms.map((room) => {
-        const docId = crypto.randomUUID();
-        const payload: any = { ...room };
-        Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
+        const payload = {
+          number: room.number,
+          ward: room.ward,
+          floor: room.floor,
+          class: room.class,
+          status: room.status,
+          patient: room.patient || null,
+          since: room.since || null
+        };
         return api.post('/room-availabilities', payload);
       });
       await Promise.all(promises);
@@ -109,13 +115,15 @@ export default function AdminKetersediaan() {
     e.preventDefault();
     setSaving(true);
     try {
-      const docId = formData.id || crypto.randomUUID();
-      const payload = { ...formData };
-      delete payload.id;
-      
-      // Cleanup empty optional fields
-      if (!payload.patient) delete payload.patient;
-      if (!payload.since) delete payload.since;
+      const payload = { 
+        number: formData.number,
+        ward: formData.ward,
+        floor: Number(formData.floor),
+        class: formData.class,
+        status: formData.status,
+        patient: formData.patient || null,
+        since: formData.since || null
+      };
 
       if (formData.id) {
         await api.put(`/room-availabilities/${formData.id}`, payload);

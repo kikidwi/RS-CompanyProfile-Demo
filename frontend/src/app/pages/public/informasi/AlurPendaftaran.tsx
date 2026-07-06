@@ -239,19 +239,21 @@ export default function AlurPendaftaran() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/information?type=alur-pendaftaran');
+        const response = await api.get('/registration-flows');
         if (response.data && response.data.length > 0) {
-          const items = response.data.map((d: any) => {
-            const data = { id: d.id.toString(), ...d.content };
-            const def = defaultFlows.find(f => f.id === data.id);
-            return {
-              ...data,
-              icon: def?.icon || ClipboardList,
-              color: def?.color || "#006370",
-            };
-          });
+          const items: RegistrationFlow[] = response.data.map((d: any) => ({
+            id: d.slug as RegistrationType,
+            label: d.label,
+            color: d.color || "#006370",
+            icon: defaultFlows.find(f => f.id === d.slug)?.icon || ClipboardList, // Fallback icon
+            description: d.description || '',
+            steps: d.steps.map((step: any) => ({
+              title: step.title,
+              detail: step.detail
+            })),
+            requirements: d.requirements.map((req: any) => req.requirement)
+          }));
           
-          // Sort to match defaultFlows order
           const orderMap = new Map(defaultFlows.map((f, i) => [f.id, i]));
           items.sort((a, b) => (orderMap.get(a.id) || 0) - (orderMap.get(b.id) || 0));
           

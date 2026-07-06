@@ -22,14 +22,14 @@ export default function AdminDewanPengawas() {
 
   const fetchData = async () => {
     try {
-      const response = await api.get('/profiles?type=dewan-pengawas');
+      const response = await api.get('/board-supervisors');
       const items: PengawasData[] = response.data.map((d: any) => ({
         id: d.id.toString(),
         name: d.name,
         role: d.role,
-        institution: d.content?.institution || "",
+        institution: d.institution || "",
         photo: d.image || "",
-        order: d.order || 0
+        order: d.sort_order || 0
       }));
       items.sort((a, b) => (a.order || 0) - (b.order || 0));
       setData(items);
@@ -60,18 +60,17 @@ export default function AdminDewanPengawas() {
     setMessage({ type: "", text: "" });
     try {
       const payload = {
-        type: 'dewan-pengawas',
         name: formData.name,
         role: formData.role,
         image: formData.photo,
-        order: formData.order,
-        content: { institution: formData.institution }
+        sort_order: formData.order,
+        institution: formData.institution
       };
       
       if (editingId) {
-        await api.put(`/profiles/${editingId}`, payload);
+        await api.put(`/board-supervisors/${editingId}`, payload);
       } else {
-        await api.post('/profiles', payload);
+        await api.post('/board-supervisors', payload);
       }
       setIsModalOpen(false);
       setMessage({ type: "success", text: editingId ? "Data berhasil diperbarui!" : "Data berhasil ditambahkan!" });
@@ -87,7 +86,7 @@ export default function AdminDewanPengawas() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus data ini?")) return;
     try {
-      await api.delete(`/profiles/${id}`);
+      await api.delete(`/board-supervisors/${id}`);
       fetchData();
     } catch (err) {
       console.error(err);

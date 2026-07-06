@@ -18,10 +18,23 @@ export default function BeritaArtikelDetail() {
       window.scrollTo(0, 0);
 
       try {
-        const response = await api.get('/information?type=berita');
+        const response = await api.get('/articles');
         let allArticles: Article[] = [];
         if (response.data && response.data.length > 0) {
-          allArticles = response.data.map((d: any) => ({ id: d.id.toString(), ...d.content }));
+          allArticles = response.data.map((d: any) => ({
+            id: d.id,
+            slug: d.slug,
+            title: d.title,
+            category: d.category,
+            date: d.date,
+            readTime: d.read_time,
+            image: d.image,
+            excerpt: d.excerpt,
+            author: d.author,
+            authorRole: d.author_role,
+            content: typeof d.content === 'string' ? [d.content] : (d.content || []),
+            tags: d.tags?.map((t: any) => t.tag) || [],
+          }));
         } else {
           allArticles = [...defaultArticles];
         }
@@ -290,7 +303,7 @@ export default function BeritaArtikelDetail() {
                 .filter((a: Article) => a.slug !== slug)
                 .slice(0, 5)
                 .map((a: Article) => {
-                  const aCfg = categoryConfig[a.category];
+                  const aCfg = categoryConfig[a.category] || { color: '#64748b' };
                   return (
                     <Link
                       key={a.id}

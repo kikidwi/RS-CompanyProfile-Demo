@@ -8,7 +8,7 @@ const categories = ["Semua", "Berita", "Edukasi", "Pengumuman"] as const;
 type FilterCategory = (typeof categories)[number];
 
 function ArticleCard({ article }: { article: Article }) {
-  const cfg = categoryConfig[article.category];
+  const cfg = categoryConfig[article.category] || { color: '#64748b', icon: BookOpen };
   return (
     <Link
       to={`/informasi/berita-artikel/${article.slug}`}
@@ -86,9 +86,22 @@ export default function BeritaArtikel() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/information?type=berita');
+        const response = await api.get('/articles');
         if (response.data && response.data.length > 0) {
-          const items = response.data.map((d: any) => ({ id: d.id.toString(), ...d.content }));
+          const items = response.data.map((d: any) => ({
+            id: d.id,
+            slug: d.slug,
+            title: d.title,
+            category: d.category,
+            date: d.date,
+            readTime: d.read_time,
+            image: d.image,
+            excerpt: d.excerpt,
+            author: d.author,
+            authorRole: d.author_role,
+            content: typeof d.content === 'string' ? [d.content] : (d.content || []),
+            tags: d.tags?.map((t: any) => t.tag) || [],
+          }));
           items.sort((a: any, b: any) => b.id - a.id);
           setArticlesData(items);
         } else {

@@ -28,13 +28,13 @@ export default function VisiMisi() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/profiles?type=visi-misi');
-        if (response.data && response.data.length > 0) {
-          const d = response.data[0].content;
+        const response = await api.get('/vision-missions');
+        if (response.data) {
+          const d = response.data;
           setData({
-            visi: d.visi || defaultData.visi,
-            misi: d.misi || defaultData.misi,
-            nilaiBudaya: d.nilaiBudaya || defaultData.nilaiBudaya,
+            visi: d.vision || defaultData.visi,
+            misi: d.mission_items?.map((m: any) => m.description) || defaultData.misi,
+            nilaiBudaya: d.cultural_values?.map((v: any) => ({ label: v.label, desc: v.description })) || defaultData.nilaiBudaya,
             tagline: d.tagline || defaultData.tagline,
           });
         }
@@ -108,4 +108,3 @@ export default function VisiMisi() {
     </div>
   );
 }
-

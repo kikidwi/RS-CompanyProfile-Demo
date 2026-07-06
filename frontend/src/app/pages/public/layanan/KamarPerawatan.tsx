@@ -102,21 +102,22 @@ export default function KamarPerawatan() {
         const response = await api.get('/rooms');
         if (response.data && response.data.length > 0) {
           const items: any[] = response.data;
-          items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+          items.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
           
-          // Map facility icons back if stored as string, but for simplicity
-          // let's just use the default roomClasses as the initial state,
-          // and if we fetch from DB, we'll map icon string to actual Lucide component.
-          const iconMap: any = {
-            BedDouble, Wind, Tv, Wifi, Users, Coffee, Star
-          };
-
           const mappedItems = items.map(item => ({
-            ...item,
-            facilities: (item.facilities || []).map((f: any) => ({
-              ...f,
-              icon: typeof f.icon === 'string' ? (iconMap[f.icon] || BedDouble) : f.icon
-            }))
+            name: item.name,
+            kelas: item.type,
+            price: `Rp ${Number(item.price).toLocaleString('id-ID')} / malam`,
+            capacity: `${item.capacity} pasien / kamar`,
+            image: item.image || "",
+            facilities: (item.features || []).map((f: any) => ({
+              label: f.feature,
+              icon: BedDouble
+            })),
+            badge: item.type === "VIP" ? "Premium" : "Tersedia",
+            bg: item.type === "VIP" ? "#fffbeb" : "#e6f4f5",
+            color: item.type === "VIP" ? "#b45309" : "#006370",
+            description: item.capacity === 1 ? "Kamar perawatan privat eksklusif dengan fasilitas memadai." : "Kamar perawatan reguler yang dirancang untuk kenyamanan proses penyembuhan pasien."
           }));
 
           setRooms(mappedItems);

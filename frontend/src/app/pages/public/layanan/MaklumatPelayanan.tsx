@@ -74,17 +74,19 @@ export default function MaklumatPelayanan() {
     const fetchData = async () => {
       try {
         const response = await api.get('/service-pledges');
-        const items = response.data;
-        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
-        
-        if (items.length > 0) {
-          const mappedItems = items.map((item: any) => ({
-            ...item,
-            id: item.id.toString(),
-            icon: (lucideIcons as any)[item.icon] || AlertCircle
+        if (response.data && response.data.length > 0) {
+          const items = response.data.map((d: any) => ({
+            id: d.id.toString(),
+            no: d.no,
+            title: d.title,
+            icon: (lucideIcons as any)[d.icon] || AlertCircle,
+            color: d.color,
+            description: d.description,
+            points: d.points ? d.points.map((p: any) => p.point) : [],
+            sort_order: d.sort_order || 0
           }));
-
-          setMaklumat(mappedItems);
+          items.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+          setMaklumat(items);
         }
       } catch (err) {
         console.error("Gagal memuat Maklumat dari Firebase:", err);

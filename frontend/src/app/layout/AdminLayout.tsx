@@ -10,7 +10,9 @@ import {
   FileText, 
   Settings, 
   LogOut, 
-  Menu
+  Menu,
+  Activity,
+  ChevronDown
 } from "lucide-react";
 import { useState } from "react";
 
@@ -44,14 +46,24 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-100 font-sans">
-      {/* Sidebar untuk Desktop */}
-      <aside className={`bg-primary-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col`}>
-        <div className="h-16 flex items-center px-6 font-bold text-xl border-b border-primary-800">
-          Admin Panel RS
+    <div className="flex h-screen bg-gray-50 font-sans" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* ── Sidebar Desktop ── */}
+      <aside className="bg-[#006370] text-white w-72 flex-shrink-0 hidden md:flex flex-col relative overflow-hidden shadow-xl z-20">
+        {/* Decorative background blur */}
+        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-40 h-40 bg-white/10 rounded-full blur-3xl mix-blend-overlay pointer-events-none"></div>
+        
+        {/* Header */}
+        <div className="h-20 flex items-center px-8 border-b border-[#00515b] relative z-10">
+          <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center mr-3 shadow-inner">
+            <Activity className="h-6 w-6 text-white" />
+          </div>
+          <span className="font-extrabold text-xl tracking-tight">RS Utama Demo</span>
         </div>
-        <div className="flex-1 overflow-y-auto py-4">
-          <nav className="space-y-1 px-3">
+
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto py-6 relative z-10 px-4 custom-scrollbar">
+          <p className="px-4 text-xs font-semibold text-[#66a3a9] uppercase tracking-wider mb-4">Menu Utama</p>
+          <nav className="space-y-1.5">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
               const Icon = item.icon;
@@ -60,43 +72,49 @@ export default function AdminLayout() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`group flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive 
-                      ? "bg-primary-800 text-white" 
-                      : "text-primary-100 hover:bg-primary-800 hover:text-white"
+                      ? "bg-white/10 text-white shadow-inner backdrop-blur-sm" 
+                      : "text-[#b2d3d6] hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <Icon className="mr-3 h-5 w-5" />
+                  <Icon className={`mr-3 h-5 w-5 transition-transform duration-200 ${isActive ? "scale-110" : "group-hover:scale-110"}`} />
                   {item.name}
+                  {isActive && <div className="ml-auto w-1.5 h-5 bg-white rounded-full"></div>}
                 </Link>
               );
             })}
           </nav>
         </div>
-        <div className="p-4 border-t border-primary-800">
+
+        {/* Footer / Logout */}
+        <div className="p-4 border-t border-[#00515b] relative z-10">
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-200 rounded-md hover:bg-primary-800 hover:text-red-100 transition-colors"
+            className="group flex items-center w-full px-4 py-3 text-sm font-medium text-red-300 rounded-xl hover:bg-red-500/10 hover:text-red-200 transition-colors"
           >
-            <LogOut className="mr-3 h-5 w-5" />
-            Keluar
+            <LogOut className="mr-3 h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            Keluar dari Sistem
           </button>
         </div>
       </aside>
 
-      {/* Sidebar Mobile (Overlay) */}
+      {/* ── Sidebar Mobile (Overlay) ── */}
       {isSidebarOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
+        <div className="fixed inset-0 z-50 flex md:hidden">
           <div 
-            className="fixed inset-0 bg-gray-600 bg-opacity-75"
+            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
             onClick={() => setIsSidebarOpen(false)}
           ></div>
-          <aside className="relative flex-1 flex flex-col max-w-xs w-full bg-primary-900 text-white">
-            <div className="h-16 flex items-center px-6 font-bold text-xl border-b border-primary-800">
-              Admin Panel
+          <aside className="relative flex-1 flex flex-col max-w-xs w-full bg-[#006370] text-white shadow-2xl">
+            <div className="h-20 flex items-center px-6 border-b border-[#00515b]">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center mr-3">
+                <Activity className="h-6 w-6 text-white" />
+              </div>
+              <span className="font-extrabold text-xl tracking-tight">RS Utama Demo</span>
             </div>
-            <div className="flex-1 overflow-y-auto py-4">
-              <nav className="space-y-1 px-3">
+            <div className="flex-1 overflow-y-auto py-6 px-3">
+              <nav className="space-y-1.5">
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
                   const Icon = item.icon;
@@ -106,10 +124,10 @@ export default function AdminLayout() {
                       key={item.path}
                       to={item.path}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                      className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                         isActive 
-                          ? "bg-primary-800 text-white" 
-                          : "text-primary-100 hover:bg-primary-800"
+                          ? "bg-white/10 text-white" 
+                          : "text-[#b2d3d6] hover:bg-white/5 hover:text-white"
                       }`}
                     >
                       <Icon className="mr-3 h-5 w-5" />
@@ -119,10 +137,10 @@ export default function AdminLayout() {
                 })}
               </nav>
             </div>
-            <div className="p-4 border-t border-primary-800">
+            <div className="p-4 border-t border-[#00515b]">
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-200 rounded-md hover:bg-primary-800"
+                className="flex items-center w-full px-4 py-3 text-sm font-medium text-red-300 rounded-xl hover:bg-red-500/10 hover:text-red-200 transition-colors"
               >
                 <LogOut className="mr-3 h-5 w-5" />
                 Keluar
@@ -132,33 +150,45 @@ export default function AdminLayout() {
         </div>
       )}
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* ── Main Content Area ── */}
+      <div className="flex-1 flex flex-col overflow-hidden w-full relative">
         {/* Topbar */}
-        <header className="bg-white shadow-sm h-16 flex-shrink-0 flex items-center justify-between px-4 md:px-6">
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 h-20 flex-shrink-0 flex items-center justify-between px-6 md:px-10 z-10 sticky top-0">
           <div className="flex items-center">
             <button
-              className="md:hidden text-gray-500 hover:text-gray-700 p-2"
+              className="md:hidden text-gray-500 hover:text-[#006370] p-2 bg-gray-50 rounded-xl mr-4 transition-colors"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu className="h-6 w-6" />
             </button>
-            <h2 className="ml-4 md:ml-0 text-xl font-semibold text-gray-800 hidden sm:block">
-              {navItems.find(item => location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path)))?.name || "Dashboard"}
-            </h2>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-sm font-medium text-gray-700">
-              {currentUser?.email}
+            <div className="hidden sm:block">
+              <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                {navItems.find(item => location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path)))?.name || "Dashboard"}
+              </h2>
+              <p className="text-xs font-semibold text-gray-400 mt-0.5">Sistem Manajemen Konten</p>
             </div>
-            <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
-              {currentUser?.email?.[0].toUpperCase() || "A"}
+          </div>
+          
+          <div className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 py-2 px-3 rounded-2xl transition-colors border border-transparent hover:border-gray-100">
+            <div className="hidden md:block text-right">
+              <div className="text-sm font-bold text-gray-700">
+                {currentUser?.email?.split('@')[0]}
+              </div>
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Administrator
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 rounded-xl bg-[#006370] flex items-center justify-center text-white font-extrabold shadow-md">
+                {currentUser?.email?.[0].toUpperCase() || "A"}
+              </div>
+              <ChevronDown size={14} className="text-gray-400 hidden md:block" />
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
+        <main className="flex-1 overflow-y-auto p-6 md:p-10 bg-[#f8fafc]">
           <Outlet />
         </main>
       </div>

@@ -28,8 +28,17 @@ export default function AdminMaklumat() {
     setLoading(true);
     try {
       const response = await api.get('/service-pledges');
-      const items: any[] = response.data;
-      items.sort((a, b) => (a.order || 0) - (b.order || 0));
+      const items: any[] = response.data.map((d: any) => ({
+        id: d.id,
+        no: d.no,
+        title: d.title,
+        icon: d.icon,
+        color: d.color,
+        description: d.description,
+        points: d.points ? d.points.map((p: any) => p.point) : [""],
+        sort_order: d.sort_order || 0
+      }));
+      items.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
       setData(items);
     } catch (err) {
       console.error(err);
@@ -48,12 +57,15 @@ export default function AdminMaklumat() {
     setMessage({ type: "", text: "" });
     try {
       const promises = defaultMaklumatItems.map((item, i) => {
-        const docId = crypto.randomUUID();
         const iconString = typeof item.icon === 'string' ? item.icon : ((item.icon as any).render?.name || (item.icon as any).name || "AlertCircle");
         const payload: any = {
-          ...item,
+          no: item.no,
+          title: item.title,
           icon: iconString,
-          order: i,
+          color: item.color,
+          description: item.description,
+          points: item.points,
+          sort_order: i,
         };
         Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
         return api.post('/service-pledges', payload);
@@ -94,7 +106,7 @@ export default function AdminMaklumat() {
         color: "#006370",
         description: "",
         points: [""],
-        order: data.length,
+        sort_order: data.length,
       });
     }
     setIsModalOpen(true);
@@ -116,11 +128,16 @@ export default function AdminMaklumat() {
     e.preventDefault();
     setSaving(true);
     try {
-      const docId = formData.id || crypto.randomUUID();
-      const payload = { ...formData };
-      delete payload.id;
-      // Filter empty
-      payload.points = payload.points.filter((p: string) => p.trim() !== "");
+      const payload = { 
+        no: formData.no,
+        title: formData.title,
+        icon: formData.icon,
+        color: formData.color,
+        description: formData.description,
+        sort_order: formData.sort_order,
+        points: formData.points.filter((i: string) => i.trim() !== "")
+      };
+      
       if (formData.id) {
         await api.put(`/service-pledges/${formData.id}`, payload);
       } else {

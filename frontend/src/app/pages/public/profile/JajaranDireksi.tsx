@@ -47,14 +47,14 @@ export default function JajaranDireksi() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/profiles?type=direksi');
+        const response = await api.get('/board-directors');
         const items = response.data.map((d: any) => ({
           id: d.id.toString(),
           name: d.name,
           role: d.role,
-          desc: d.content?.desc || "",
+          desc: d.description || "",
           photo: d.image || "",
-          order: d.order || 0
+          order: d.sort_order || 0
         }));
         items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
         if (items.length > 0) {

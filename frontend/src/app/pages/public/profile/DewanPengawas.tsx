@@ -29,14 +29,14 @@ export default function DewanPengawas() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/profiles?type=dewan-pengawas');
+        const response = await api.get('/board-supervisors');
         const items = response.data.map((d: any) => ({
           id: d.id.toString(),
           name: d.name,
           role: d.role,
-          institution: d.content?.institution || "",
+          institution: d.institution || "",
           photo: d.image || "",
-          order: d.order || 0
+          order: d.sort_order || 0
         }));
         items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
         setPengawasData(items);

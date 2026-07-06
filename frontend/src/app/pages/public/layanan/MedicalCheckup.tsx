@@ -67,9 +67,19 @@ export default function MedicalCheckup() {
     const fetchData = async () => {
       try {
         const response = await api.get('/mcu-packages');
-        const items = response.data;
-        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
-        if (items.length > 0) setPackages(items);
+        if (response.data && response.data.length > 0) {
+          const items = response.data.map((d: any) => ({
+            name: d.name,
+            price: `Rp ${Number(d.price).toLocaleString('id-ID')}`,
+            color: d.color,
+            badge: d.badge,
+            description: d.description,
+            items: (d.items || []).map((i: any) => i.item),
+            sort_order: d.sort_order || 0
+          }));
+          items.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+          setPackages(items);
+        }
       } catch (err) {
         console.error("Gagal memuat MCU dari API:", err);
       } finally {

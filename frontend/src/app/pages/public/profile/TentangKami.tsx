@@ -19,15 +19,15 @@ export default function TentangKami() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/profiles?type=tentang-kami');
-        if (response.data && response.data.length > 0) {
-          const d = response.data[0].content;
+        const response = await api.get('/about-us');
+        if (response.data) {
+          const d = response.data;
           setData({
-            paragraf1: d.paragraf1 || defaultData.paragraf1,
-            paragraf2: d.paragraf2 || defaultData.paragraf2,
-            paragraf3: d.paragraf3 || defaultData.paragraf3,
-            keunggulan: d.keunggulan || defaultData.keunggulan,
-            akreditasi: d.akreditasi || defaultData.akreditasi,
+            paragraf1: d.paragraph_1 || defaultData.paragraf1,
+            paragraf2: d.paragraph_2 || defaultData.paragraf2,
+            paragraf3: d.paragraph_3 || defaultData.paragraf3,
+            keunggulan: d.strengths?.map((s: any) => ({ title: s.title, desc: s.description })) || defaultData.keunggulan,
+            akreditasi: d.accreditation || defaultData.akreditasi,
           });
         }
       } catch (err) {
@@ -82,4 +82,3 @@ export default function TentangKami() {
     </div>
   );
 }
-

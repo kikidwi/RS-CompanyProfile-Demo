@@ -192,18 +192,20 @@ export default function InformasiPenting() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/information?type=info-penting');
+        const response = await api.get('/important-infos');
         if (response.data && response.data.length > 0) {
-          const items: InfoSection[] = [];
-          response.data.forEach((d: any) => {
-            const data = { id: d.content.id || d.id.toString(), ...d.content } as InfoSection;
-            const def = defaultSections.find(s => s.id === data.id);
-            items.push({
-              ...data,
-              icon: def?.icon || Info,
-              color: def?.color || "#006370",
-            });
-          });
+          const items: InfoSection[] = response.data.map((d: any) => ({
+            id: d.slug,
+            title: d.title,
+            color: d.color || "#006370",
+            icon: defaultSections.find(s => s.id === d.slug)?.icon || Clock, // Fallback icon
+            items: d.items.map((item: any) => ({
+              label: item.label,
+              value: item.value,
+              detail: item.detail,
+              highlight: item.is_highlight
+            }))
+          }));
           
           const orderMap = new Map(defaultSections.map((s, i) => [s.id, i]));
           items.sort((a, b) => (orderMap.get(a.id) || 0) - (orderMap.get(b.id) || 0));
