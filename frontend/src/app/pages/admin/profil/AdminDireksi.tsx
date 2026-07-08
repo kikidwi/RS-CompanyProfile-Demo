@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../../../lib/api";
 import { Plus, Trash2, Pencil } from "lucide-react";
-
+import ImageUpload from "../../../../app/components/ImageUpload";
 interface DireksiData {
   id: string;
   name: string;
@@ -166,22 +166,12 @@ export default function AdminDireksi() {
                   <textarea rows={2} value={formData.desc} onChange={(e) => setFormData({ ...formData, desc: e.target.value })} className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Foto (Pilih Gambar)</label>
-                  <input type="file" accept="image/*" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setFormData({ ...formData, photo: reader.result as string });
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }} className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm" />
-                  {formData.photo && (
-                    <div className="mt-2">
-                      <img src={formData.photo} alt="Preview" className="h-20 w-20 object-cover rounded-md border bg-gray-50" />
-                    </div>
-                  )}
+                  <ImageUpload
+                    value={formData.photo}
+                    onChange={(url) => setFormData({ ...formData, photo: url })}
+                    folder="directors"
+                    label="Foto Direksi"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Urutan Tampil</label>

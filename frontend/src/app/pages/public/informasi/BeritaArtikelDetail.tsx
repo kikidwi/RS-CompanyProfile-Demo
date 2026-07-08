@@ -199,14 +199,11 @@ export default function BeritaArtikelDetail() {
             {article.excerpt}
           </p>
 
-          {/* Content paragraphs */}
-          <div className="space-y-5">
-            {article.content.map((para, i) => (
-              <p key={i} className="text-gray-700 text-[15px] leading-[1.85]">
-                {para}
-              </p>
-            ))}
-          </div>
+          {/* Content */}
+          <div 
+            className="space-y-5 text-gray-700 text-[15px] leading-[1.85] [&>p]:mb-4 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4 [&>ol]:list-decimal [&>ol]:pl-5 [&>ol]:mb-4 [&>blockquote]:border-l-4 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-gray-500"
+            dangerouslySetInnerHTML={{ __html: typeof article.content === 'string' ? article.content : (Array.isArray(article.content) ? article.content.join('<br/><br/>') : '') }}
+          />
 
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-2 mt-10 pt-6 border-t border-gray-100">

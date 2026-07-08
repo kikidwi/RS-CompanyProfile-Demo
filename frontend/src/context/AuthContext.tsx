@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../lib/api';
+import { canAccess, type AdminModule } from '../lib/permissions';
 
 interface User {
   id: number;
   name: string;
   email: string;
+  role: string;
 }
 
 interface AuthContextType {
@@ -13,6 +15,7 @@ interface AuthContextType {
   loading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  checkAccess: (module: AdminModule) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   login: () => {},
   logout: () => {},
+  checkAccess: () => false,
 });
 
 export function useAuth() {
@@ -39,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const response = await api.get('/user');
           setCurrentUser(response.data);
-          setUserRole('admin'); // Atur role default jika diperlukan
+          setUserRole(response.data.role || 'admin');
         } catch (error) {
           console.error("Error fetching user:", error);
           localStorage.removeItem('adminToken');
@@ -56,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (token: string, user: User) => {
     localStorage.setItem('adminToken', token);
     setCurrentUser(user);
-    setUserRole('admin');
+    setUserRole(user.role || 'admin');
   };
 
   const logout = () => {
@@ -65,12 +69,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserRole(null);
   };
 
+  const checkAccess = (module: AdminModule): boolean => {
+    return canAccess(userRole, module);
+  };
+
   const value = {
     currentUser,
     userRole,
     loading,
     login,
     logout,
+    checkAccess,
   };
 
   return (
@@ -79,3 +88,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
+

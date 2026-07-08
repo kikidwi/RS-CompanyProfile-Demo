@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../../../lib/api";
 import { logActivity } from "../../../lib/activity";
-import { Plus, Trash2, Pencil, X, Upload, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Pencil, X } from "lucide-react";
+import ImageUpload from "../../../app/components/ImageUpload";
 import { defaultPromos, Promo, categories, Category } from "../public/Promosi";
 
 export default function AdminPromosi() {
@@ -225,55 +226,13 @@ export default function AdminPromosi() {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Gambar Banner Promosi (URL atau Upload)</label>
-                <p className="text-xs text-gray-500 mb-2">Karena desain terbaru menggunakan gambar penuh untuk menampilkan informasi diskon, pastikan gambar yang Anda pilih sudah mencakup informasi harga/promo secara visual.</p>
-                
-                <div className="space-y-3">
-                  {/* File Upload */}
-                  <div className="flex flex-col">
-                    <label className="text-xs font-medium text-gray-600 mb-1">Upload Gambar dari Komputer:</label>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setFormData({ ...formData, image: reader.result as string });
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }} 
-                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#006370] file:text-white hover:file:bg-[#004e58]" 
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="h-px bg-gray-200 flex-1"></div>
-                    <span className="text-xs text-gray-400 font-medium">ATAU</span>
-                    <div className="h-px bg-gray-200 flex-1"></div>
-                  </div>
-
-                  {/* URL Input */}
-                  <div className="flex flex-col">
-                    <label className="text-xs font-medium text-gray-600 mb-1">Gunakan Link URL (Internet):</label>
-                    <input 
-                      type="url" 
-                      value={formData.image} 
-                      onChange={e => setFormData({...formData, image: e.target.value})} 
-                      className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#006370]" 
-                      placeholder="https://..." 
-                    />
-                  </div>
-                </div>
-                
-                {formData.image && (
-                  <div className="mt-4 p-2 border border-gray-200 rounded-md bg-gray-50 max-w-sm">
-                    <p className="text-xs text-gray-500 mb-2 font-medium">Preview Gambar:</p>
-                    <img src={formData.image} alt="Preview" className="w-full h-auto max-h-48 object-contain rounded bg-white border border-gray-100" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                  </div>
-                )}
+                <ImageUpload
+                  value={formData.image}
+                  onChange={(url) => setFormData({...formData, image: url})}
+                  folder="promotions"
+                  label="Gambar Banner Promosi"
+                  hint="Pastikan gambar yang Anda pilih sudah mencakup informasi harga/promo secara visual."
+                />
               </div>
 
               <div>

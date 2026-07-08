@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../../../lib/api";
 import { logActivity } from "../../../lib/activity";
-import { Plus, Trash2, Pencil, X, Upload } from "lucide-react";
+import { Plus, Trash2, Pencil, X } from "lucide-react";
+import ImageUpload from "../../../app/components/ImageUpload";
 
 interface Schedule {
   day: string;
@@ -260,8 +261,12 @@ export default function AdminDokter() {
                       <input type="text" required value={formData.polyclinic} onChange={(e) => setFormData({...formData, polyclinic: e.target.value})} className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Foto (URL)</label>
-                      <input type="url" value={formData.image} onChange={(e) => setFormData({...formData, image: e.target.value})} className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm" />
+                      <ImageUpload
+                        value={formData.image}
+                        onChange={(url) => setFormData({...formData, image: url})}
+                        folder="doctors"
+                        label="Foto Dokter"
+                      />
                     </div>
                   </div>
 

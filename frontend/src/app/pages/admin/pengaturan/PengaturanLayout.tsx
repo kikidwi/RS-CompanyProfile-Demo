@@ -3,14 +3,14 @@ import { useAuth } from "../../../../context/AuthContext";
 import { Settings, Users } from "lucide-react";
 
 export default function PengaturanLayout() {
-  const { userRole } = useAuth();
+  const { checkAccess } = useAuth();
   const location = useLocation();
 
   const tabs = [
     { name: "Umum", path: "/admin/pengaturan", icon: Settings },
   ];
 
-  if (userRole === "super_admin") {
+  if (checkAccess('pengaturan.pengguna')) {
     tabs.push({ name: "Pengguna (Staf)", path: "/admin/pengaturan/pengguna", icon: Users });
   }
 

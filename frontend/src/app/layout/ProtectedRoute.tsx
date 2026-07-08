@@ -1,8 +1,13 @@
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { currentUser, loading } = useAuth();
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}
+
+export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { currentUser, userRole, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -18,5 +23,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
+  // Check role-based access
+  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+    return <Navigate to="/admin" replace />;
+  }
+
   return <>{children}</>;
 }
+

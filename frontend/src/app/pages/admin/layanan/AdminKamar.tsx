@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../../../lib/api";
-import { Plus, Trash2, Pencil, X, Upload, BedDouble, Wind, Tv, Wifi, Users, Coffee, Star } from "lucide-react";
+import { Plus, Trash2, Pencil, X, BedDouble, Wind, Tv, Wifi, Users, Coffee, Star } from "lucide-react";
+import ImageUpload from "../../../../app/components/ImageUpload";
 import { logActivity } from "../../../../lib/activity";
 
 export default function AdminKamar() {
@@ -247,8 +248,12 @@ export default function AdminKamar() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">URL Foto Kamar (opsional)</label>
-                  <input type="url" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-[#006370] focus:border-[#006370]" placeholder="https://..." />
+                  <ImageUpload
+                    value={formData.image}
+                    onChange={(url) => setFormData({...formData, image: url})}
+                    folder="rooms"
+                    label="Foto Kamar (opsional)"
+                  />
                 </div>
                 
                 <div>

@@ -13,7 +13,7 @@ interface UserData {
 }
 
 export default function ManajemenUser() {
-  const { userRole } = useAuth();
+  const { checkAccess } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,7 +28,7 @@ export default function ManajemenUser() {
   const [error, setError] = useState("");
 
   // Hanya Super Admin yang boleh akses
-  if (userRole !== "super_admin") {
+  if (!checkAccess('pengaturan.pengguna')) {
     return <Navigate to="/admin/pengaturan" replace />;
   }
 

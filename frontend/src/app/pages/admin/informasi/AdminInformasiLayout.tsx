@@ -1,14 +1,19 @@
 import { Outlet, Link, useLocation } from "react-router";
 import { Megaphone, GitBranch, AlertCircle } from "lucide-react";
+import { useAuth } from "../../../../context/AuthContext";
+import type { AdminModule } from "../../../../lib/permissions";
 
 export default function AdminInformasiLayout() {
   const location = useLocation();
+  const { checkAccess } = useAuth();
 
-  const tabs = [
-    { name: "Berita & Artikel", path: "/admin/informasi/berita", icon: Megaphone },
-    { name: "Alur Pendaftaran", path: "/admin/informasi/alur", icon: GitBranch },
-    { name: "Informasi Penting", path: "/admin/informasi/penting", icon: AlertCircle },
+  const allTabs: { name: string; path: string; icon: any; module: AdminModule }[] = [
+    { name: "Berita & Artikel", path: "/admin/informasi/berita", icon: Megaphone, module: 'informasi.berita' },
+    { name: "Alur Pendaftaran", path: "/admin/informasi/alur", icon: GitBranch, module: 'informasi.alur' },
+    { name: "Informasi Penting", path: "/admin/informasi/penting", icon: AlertCircle, module: 'informasi.penting' },
   ];
+
+  const tabs = allTabs.filter(tab => checkAccess(tab.module));
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -46,3 +51,4 @@ export default function AdminInformasiLayout() {
     </div>
   );
 }
+

@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import api from "../../../../lib/api";
 import { logActivity } from "../../../../lib/activity";
-import { Plus, Trash2, Pencil, X, Upload } from "lucide-react";
+import { Plus, Trash2, Pencil, X } from "lucide-react";
+import ImageUpload from "../../../../app/components/ImageUpload";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import { articles as defaultArticles, type Article, type ArticleCategory } from "../../public/informasi/articlesData";
 
 export default function AdminBerita() {
@@ -22,7 +25,7 @@ export default function AdminBerita() {
     excerpt: "",
     author: "Tim Humas RS",
     authorRole: "Bagian Humas & Pemasaran",
-    content: [""],
+    content: "",
     tags: [""],
   });
 
@@ -40,7 +43,7 @@ export default function AdminBerita() {
         excerpt: d.excerpt,
         author: d.author,
         authorRole: d.author_role,
-        content: typeof d.content === 'string' ? [d.content] : (d.content || []),
+        content: Array.isArray(d.content) ? d.content.join('<br/><br/>') : (d.content || ""),
         tags: d.tags?.map((t: any) => t.tag) || [],
       }));
       items.sort((a, b) => (b.id as number) - (a.id as number)); // Descending ID
@@ -59,7 +62,10 @@ export default function AdminBerita() {
 
   const handleOpenModal = (article?: Article) => {
     if (article) {
-      setFormData(article);
+      setFormData({
+        ...article,
+        content: Array.isArray(article.content) ? article.content.join('<br/><br/>') : article.content
+      });
     } else {
       setFormData({
         id: 0,
@@ -72,7 +78,7 @@ export default function AdminBerita() {
         excerpt: "",
         author: "Tim Humas RS",
         authorRole: "Bagian Humas & Pemasaran",
-        content: [""],
+        content: "",
         tags: [""],
       });
     }
@@ -260,10 +266,12 @@ export default function AdminBerita() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">URL Gambar (Thumbnail) *</label>
-                      <div className="flex gap-2">
-                        <input type="url" required value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} className="flex-1 border border-gray-300 rounded-md py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="https://..." />
-                      </div>
+                      <ImageUpload
+                        value={formData.image}
+                        onChange={(url) => setFormData({ ...formData, image: url })}
+                        folder="articles"
+                        label="Gambar Thumbnail *"
+                      />
                     </div>
 
                     <div>
@@ -296,8 +304,23 @@ export default function AdminBerita() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Konten Lengkap Artikel (Pisahkan paragraf dengan Enter) *</label>
-                  <textarea required rows={10} value={formData.content.join('\n\n')} onChange={(e) => handleArrayStringChange('content', e.target.value)} className="w-full border border-gray-300 rounded-md py-3 px-4 text-sm focus:ring-blue-500 focus:border-blue-500 font-serif" placeholder="Tuliskan isi paragraf artikel di sini..." />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Konten Lengkap Artikel *</label>
+                  <div className="bg-white">
+                    <ReactQuill
+                      theme="snow"
+                      value={formData.content}
+                      onChange={(val) => setFormData({ ...formData, content: val })}
+                      className="h-64 mb-12"
+                      modules={{
+                        toolbar: [
+                          [{ 'header': [1, 2, 3, false] }],
+                          ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                          [{'list': 'ordered'}, {'list': 'bullet'}],
+                          ['link', 'clean']
+                        ],
+                      }}
+                    />
+                  </div>
                 </div>
                 
               </form>

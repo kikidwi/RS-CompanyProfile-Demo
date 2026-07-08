@@ -111,33 +111,73 @@ export default function Router() {
         >
           <Route index element={<Dashboard />} />
           
-          <Route path="pengaturan" element={<PengaturanLayout />}>
+          {/* Pengaturan: accessible by super_admin & admin */}
+          <Route path="pengaturan" element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+              <PengaturanLayout />
+            </ProtectedRoute>
+          }>
             <Route index element={<PengaturanUmum />} />
-            <Route path="pengguna" element={<ManajemenUser />} />
+            {/* Pengguna: super_admin only */}
+            <Route path="pengguna" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <ManajemenUser />
+              </ProtectedRoute>
+            } />
           </Route>
 
-          <Route path="profil" element={<ProfilLayout />}>
+          {/* Profil: super_admin & admin only */}
+          <Route path="profil" element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+              <ProfilLayout />
+            </ProtectedRoute>
+          }>
             <Route index element={<AdminTentangKami />} />
             <Route path="visi-misi" element={<AdminVisiMisi />} />
             <Route path="direksi" element={<AdminDireksi />} />
             <Route path="dewan-pengawas" element={<AdminDewanPengawas />} />
           </Route>
           
-          <Route path="dokter" element={<AdminDokter />} />
-          <Route path="promosi" element={<AdminPromosi />} />
+          {/* Dokter: super_admin & admin only */}
+          <Route path="dokter" element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+              <AdminDokter />
+            </ProtectedRoute>
+          } />
+
+          {/* Promosi: super_admin & admin only */}
+          <Route path="promosi" element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+              <AdminPromosi />
+            </ProtectedRoute>
+          } />
           
-          <Route path="layanan" element={<AdminLayananLayout />}>
+          {/* Layanan: super_admin & admin only */}
+          <Route path="layanan" element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+              <AdminLayananLayout />
+            </ProtectedRoute>
+          }>
             <Route index element={<AdminMCU />} />
             <Route path="kamar" element={<AdminKamar />} />
             <Route path="maklumat" element={<AdminMaklumat />} />
             <Route path="ketersediaan" element={<AdminKetersediaan />} />
           </Route>
           
+          {/* Informasi: accessible by all roles (sidebar filtered per sub-tab) */}
           <Route path="informasi" element={<AdminInformasiLayout />}>
             <Route index element={<AdminBerita />} />
             <Route path="berita" element={<AdminBerita />} />
-            <Route path="alur" element={<AdminAlurPendaftaran />} />
-            <Route path="penting" element={<AdminInfoPenting />} />
+            <Route path="alur" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <AdminAlurPendaftaran />
+              </ProtectedRoute>
+            } />
+            <Route path="penting" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <AdminInfoPenting />
+              </ProtectedRoute>
+            } />
           </Route>
           
           {/* Rute admin lainnya akan ditambahkan di fase selanjutnya */}

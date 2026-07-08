@@ -1,5 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import { canAccess, getRoleLabel, type AdminModule } from "../../lib/permissions";
 import api from "../../lib/api";
 import { 
   LayoutDashboard, 
@@ -17,7 +18,7 @@ import {
 import { useState } from "react";
 
 export default function AdminLayout() {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, userRole, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -35,15 +36,17 @@ export default function AdminLayout() {
     }
   };
 
-  const navItems = [
-    { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
-    { name: "Profil", path: "/admin/profil", icon: Users },
-    { name: "Dokter", path: "/admin/dokter", icon: Stethoscope },
-    { name: "Layanan", path: "/admin/layanan", icon: Bed },
-    { name: "Promosi", path: "/admin/promosi", icon: Tag },
-    { name: "Informasi", path: "/admin/informasi", icon: FileText },
-    { name: "Pengaturan", path: "/admin/pengaturan", icon: Settings },
+  const allNavItems: { name: string; path: string; icon: any; module: AdminModule }[] = [
+    { name: "Dashboard", path: "/admin", icon: LayoutDashboard, module: 'dashboard' },
+    { name: "Profil", path: "/admin/profil", icon: Users, module: 'profil' },
+    { name: "Dokter", path: "/admin/dokter", icon: Stethoscope, module: 'dokter' },
+    { name: "Layanan", path: "/admin/layanan", icon: Bed, module: 'layanan' },
+    { name: "Promosi", path: "/admin/promosi", icon: Tag, module: 'promosi' },
+    { name: "Informasi", path: "/admin/informasi", icon: FileText, module: 'informasi' },
+    { name: "Pengaturan", path: "/admin/pengaturan", icon: Settings, module: 'pengaturan' },
   ];
+
+  const navItems = allNavItems.filter(item => canAccess(userRole, item.module));
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -175,7 +178,7 @@ export default function AdminLayout() {
                 {currentUser?.email?.split('@')[0]}
               </div>
               <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Administrator
+                {getRoleLabel(userRole)}
               </div>
             </div>
             <div className="flex items-center gap-2">
